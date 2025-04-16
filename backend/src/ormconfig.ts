@@ -1,5 +1,7 @@
 import { DataSourceOptions } from 'typeorm';
 import dotenv from 'dotenv';
+import { join } from 'path';
+
 dotenv.config();
 
 const config: DataSourceOptions = {
@@ -7,8 +9,8 @@ const config: DataSourceOptions = {
   url: process.env.DATABASE_URL,
   synchronize: false, // set true for dev only
   logging: false,
-  entities: [__dirname + '/src/entities/*.{ts,js}'],
-  migrations: [__dirname + '/src/migrations/*.{ts,js}'],
+  entities: [join(__dirname, 'entities', '*.{ts,js}')],
+  migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
   ssl: {
     rejectUnauthorized: false, // Required for Neon Postgres
   },

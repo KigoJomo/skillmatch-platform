@@ -1,11 +1,15 @@
 // filepath: /home/roci/Athena/qa-qe/skillmatch/backend/src/controllers/JobController.ts
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '../data-source';
-import { Job } from '../entities/Job';
+import { Job, JobType, ExperienceLevel } from '../entities/Job';
 import { User } from '../entities/User';
 
 export class JobController {
-  static async getAllJobs(req: Request, res: Response) {
+  static async getAllJobs(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       const jobRepository = AppDataSource.getRepository(Job);
 
@@ -36,32 +40,42 @@ export class JobController {
       }
 
       const jobs = await queryBuilder.getMany();
-
-      return res.json(jobs);
+      res.json(jobs);
     } catch (error) {
-      console.error('Error getting jobs:', error);
-      return res
-        .status(500)
-        .json({ error: 'Server error while retrieving jobs' });
+      next(error);
     }
   }
 
-  static async createJob(req: Request, res: Response) {
+  static async createJob(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
-      const { title, description, location, requirements, type, salary } =
-        req.body;
+      const {
+        title,
+        description,
+        location,
+        requiredSkills,
+        jobType,
+        salary,
+        experienceLevel = ExperienceLevel.ENTRY,
+        company,
+      } = req.body;
 
       // Verify the user exists and is an employer
-      const userId = req.body.userId; // Assume this comes from JWT middleware
+      const userId = req.body.userId; // From JWT middleware
       const userRepository = AppDataSource.getRepository(User);
       const user = await userRepository.findOne({ where: { id: userId } });
 
       if (!user) {
-        return res.status(404).json({ error: 'User not found' });
+        res.status(404).json({ error: 'User not found' });
+        return;
       }
 
       if (user.role !== 'employer') {
-        return res.status(403).json({ error: 'Only employers can post jobs' });
+        res.status(403).json({ error: 'Only employers can post jobs' });
+        return;
       }
 
       // Create new job
@@ -69,24 +83,28 @@ export class JobController {
       job.title = title;
       job.description = description;
       job.location = location;
-      job.requirements = requirements;
-      job.type = type;
+      job.requiredSkills = requiredSkills;
+      job.jobType = jobType;
       job.salary = salary;
+      job.experienceLevel = experienceLevel;
+      job.company = company;
       job.postedBy = user;
-      job.postedDate = new Date();
+      job.isActive = true;
 
       const savedJob = await AppDataSource.getRepository(Job).save(job);
-
-      return res.status(201).json(savedJob);
+      res.status(201).json(savedJob);
     } catch (error) {
-      console.error('Error creating job:', error);
-      return res.status(500).json({ error: 'Server error while creating job' });
+      next(error);
     }
   }
 
-  static async getJobById(req: Request, res: Response) {
+  static async getJobById(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
-      const jobId = parseInt(req.params.id);
+      const jobId = req.params.id;
 
       const job = await AppDataSource.getRepository(Job).findOne({
         where: { id: jobId },
@@ -94,7 +112,8 @@ export class JobController {
       });
 
       if (!job) {
-        return res.status(404).json({ error: 'Job not found' });
+        res.status(404).json({ error: 'Job not found' });
+        return;
       }
 
       // Hide sensitive employer data
@@ -103,18 +122,19 @@ export class JobController {
         job.postedBy = employerWithoutPassword as User;
       }
 
-      return res.json(job);
+      res.json(job);
     } catch (error) {
-      console.error('Error getting job by ID:', error);
-      return res
-        .status(500)
-        .json({ error: 'Server error while retrieving job' });
+      next(error);
     }
   }
 
-  static async updateJob(req: Request, res: Response) {
+  static async updateJob(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
-      const jobId = parseInt(req.params.id);
+      const jobId = req.params.id;
       const userId = req.body.userId; // From JWT middleware
 
       const jobRepository = AppDataSource.getRepository(Job);
@@ -124,38 +144,51 @@ export class JobController {
       });
 
       if (!job) {
-        return res.status(404).json({ error: 'Job not found' });
+        res.status(404).json({ error: 'Job not found' });
+        return;
       }
 
       // Check if user is the job poster
       if (job.postedBy.id !== userId) {
-        return res
-          .status(403)
-          .json({ error: 'Not authorized to update this job' });
+        res.status(403).json({ error: 'Not authorized to update this job' });
+        return;
       }
 
       // Update job fields
-      const { title, description, location, requirements, type, salary } =
-        req.body;
+      const {
+        title,
+        description,
+        location,
+        requiredSkills,
+        jobType,
+        salary,
+        experienceLevel,
+        company,
+      } = req.body;
 
       if (title) job.title = title;
       if (description) job.description = description;
       if (location) job.location = location;
-      if (requirements) job.requirements = requirements;
-      if (type) job.type = type;
+      if (requiredSkills) job.requiredSkills = requiredSkills;
+      if (jobType) job.jobType = jobType;
       if (salary) job.salary = salary;
+      if (experienceLevel) job.experienceLevel = experienceLevel;
+      if (company) job.company = company;
 
       const updatedJob = await jobRepository.save(job);
-      return res.json(updatedJob);
+      res.json(updatedJob);
     } catch (error) {
-      console.error('Error updating job:', error);
-      return res.status(500).json({ error: 'Server error while updating job' });
+      next(error);
     }
   }
 
-  static async deleteJob(req: Request, res: Response) {
+  static async deleteJob(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
-      const jobId = parseInt(req.params.id);
+      const jobId = req.params.id;
       const userId = req.body.userId; // From JWT middleware
 
       const jobRepository = AppDataSource.getRepository(Job);
@@ -165,21 +198,20 @@ export class JobController {
       });
 
       if (!job) {
-        return res.status(404).json({ error: 'Job not found' });
+        res.status(404).json({ error: 'Job not found' });
+        return;
       }
 
       // Check if user is the job poster
       if (job.postedBy.id !== userId) {
-        return res
-          .status(403)
-          .json({ error: 'Not authorized to delete this job' });
+        res.status(403).json({ error: 'Not authorized to delete this job' });
+        return;
       }
 
       await jobRepository.remove(job);
-      return res.json({ message: 'Job deleted successfully' });
+      res.json({ message: 'Job deleted successfully' });
     } catch (error) {
-      console.error('Error deleting job:', error);
-      return res.status(500).json({ error: 'Server error while deleting job' });
+      next(error);
     }
   }
 }

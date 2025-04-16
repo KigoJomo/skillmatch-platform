@@ -1,22 +1,52 @@
 // filepath: /home/roci/Athena/qa-qe/skillmatch/backend/src/routes/jobs.ts
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { JobController } from '../controllers/JobController';
+import { authenticate, authorize } from '../middleware/authMiddleware';
+import { asyncHandler } from '../middleware/errorMiddleware';
+import { UserRole } from '../entities/User';
 
 const router = Router();
 
-// GET /api/jobs - Get all jobs with optional filters
-router.get('/', JobController.getAllJobs);
+// Convert controller methods to return Promise<void>
+const wrapHandler = (fn: Function) => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    await fn(req, res, next);
+  };
+};
 
-// POST /api/jobs - Create a new job
-router.post('/', JobController.createJob);
+// Wrap controller methods
+const getAllJobs = wrapHandler(JobController.getAllJobs.bind(JobController));
+const createJob = wrapHandler(JobController.createJob.bind(JobController));
+const getJobById = wrapHandler(JobController.getJobById.bind(JobController));
+const updateJob = wrapHandler(JobController.updateJob.bind(JobController));
+const deleteJob = wrapHandler(JobController.deleteJob.bind(JobController));
 
-// GET /api/jobs/:id - Get job by ID
-router.get('/:id', JobController.getJobById);
+// Public routes
+router.get('/', asyncHandler(getAllJobs));
+router.get('/:id', asyncHandler(getJobById));
 
-// PUT /api/jobs/:id - Update job by ID
-router.put('/:id', JobController.updateJob);
-
-// DELETE /api/jobs/:id - Delete job by ID
-router.delete('/:id', JobController.deleteJob);
+// Protected routes with authentication and authorization
+router.post(
+  '/',
+  authenticate,
+  authorize([UserRole.EMPLOYER]),
+  asyncHandler(createJob)
+);
+router.put(
+  '/:id',
+  authenticate,
+  authorize([UserRole.EMPLOYER]),
+  asyncHandler(updateJob)
+);
+router.delete(
+  '/:id',
+  authenticate,
+  authorize([UserRole.EMPLOYER]),
+  asyncHandler(deleteJob)
+);
 
 export default router;

@@ -39,7 +39,11 @@ export class AuthController {
       await AppDataSource.getRepository(Profile).save(profile);
 
       // Generate JWT token
-      const token = generateToken(savedUser.id);
+      const token = generateToken({
+        id: savedUser.id,
+        email: savedUser.email,
+        role: savedUser.role,
+      });
 
       return res.status(201).json({
         id: savedUser.id,
@@ -76,7 +80,11 @@ export class AuthController {
       }
 
       // Generate JWT token
-      const token = generateToken(user.id);
+      const token = generateToken({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      });
 
       return res.json({
         id: user.id,
@@ -95,7 +103,7 @@ export class AuthController {
     try {
       const userId = req.params.id;
       const user = await AppDataSource.getRepository(User).findOne({
-        where: { id: parseInt(userId) },
+        where: { id: userId }, // Changed from parseInt(userId)
         relations: ['profile'],
       });
 

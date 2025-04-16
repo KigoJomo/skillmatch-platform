@@ -11,71 +11,72 @@ import { User } from './User';
 import { Application } from './Application';
 
 export enum JobType {
-  FULL_TIME = 'full-time',
-  PART_TIME = 'part-time',
-  CONTRACT = 'contract',
-  FREELANCE = 'freelance',
-  INTERNSHIP = 'internship',
+  FULL_TIME = 'FULL_TIME',
+  PART_TIME = 'PART_TIME',
+  CONTRACT = 'CONTRACT',
+  INTERNSHIP = 'INTERNSHIP',
 }
 
 export enum ExperienceLevel {
-  ENTRY = 'entry',
-  JUNIOR = 'junior',
-  MID = 'mid',
-  SENIOR = 'senior',
-  LEAD = 'lead',
-  EXECUTIVE = 'executive',
+  ENTRY = 'ENTRY',
+  MID = 'MID',
+  SENIOR = 'SENIOR',
+  LEAD = 'LEAD',
+  EXECUTIVE = 'EXECUTIVE',
 }
 
-@Entity('jobs')
+@Entity()
 export class Job {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column('text')
-  description: string;
-
-  @Column({ nullable: true })
-  company: string;
+  description!: string;
 
   @Column()
-  location: string;
+  company!: string;
 
   @Column({ nullable: true })
-  salary: string;
+  location!: string;
+
+  @Column({ nullable: true })
+  salary!: string;
 
   @Column({
     type: 'enum',
     enum: JobType,
     default: JobType.FULL_TIME,
   })
-  jobType: JobType;
+  jobType!: JobType;
 
   @Column({
     type: 'enum',
     enum: ExperienceLevel,
     default: ExperienceLevel.ENTRY,
   })
-  experienceLevel: ExperienceLevel;
+  experienceLevel!: ExperienceLevel;
 
   @Column('simple-array')
-  requiredSkills: string[];
+  requiredSkills!: string[];
 
   @Column({ default: true })
-  isActive: boolean;
+  isActive!: boolean;
+
+  @Column()
+  postedDate!: Date;
 
   @ManyToOne(() => User, (user) => user.postedJobs)
-  postedBy: User;
+  postedBy!: User;
 
   @OneToMany(() => Application, (application) => application.job)
-  applications: Application[];
+  applications!: Application[];
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

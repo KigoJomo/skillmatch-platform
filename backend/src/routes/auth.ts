@@ -1,16 +1,28 @@
-// filepath: /home/roci/Athena/qa-qe/skillmatch/backend/src/routes/auth.ts
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { AuthController } from '../controllers/AuthController';
+import { asyncHandler } from '../middleware/errorMiddleware';
 
 const router = Router();
 
-// POST /api/auth/register
-router.post('/register', AuthController.register);
+// Convert controller methods to return Promise<void>
+const wrapHandler = (fn: Function) => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    await fn(req, res, next);
+  };
+};
 
-// POST /api/auth/login
-router.post('/login', AuthController.login);
+// Wrap controller methods
+const register = wrapHandler(AuthController.register.bind(AuthController));
+const login = wrapHandler(AuthController.login.bind(AuthController));
+const getUser = wrapHandler(AuthController.getUser.bind(AuthController));
 
-// GET /api/users/:id
-router.get('/users/:id', AuthController.getUser);
+// Routes
+router.post('/register', asyncHandler(register));
+router.post('/login', asyncHandler(login));
+router.get('/users/:id', asyncHandler(getUser));
 
 export default router;
