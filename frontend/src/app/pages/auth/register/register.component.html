@@ -1,0 +1,89 @@
+<main class="min-h-screen flex items-center justify-center py-12 px-4 bg-[var(--color-background)]">
+  <div class="w-full max-w-md space-y-8 animate-scale-in">
+    <div class="text-center">
+      <app-logo class="mx-auto"></app-logo>
+      <h2 class="mt-6">Create an Account</h2>
+      <p class="mt-2">Join SkillMatch to discover opportunities that match your true potential</p>
+    </div>
+
+    <div class="flex rounded-lg p-1 bg-background-light/30 border border-foreground-light/30">
+      <button *ngFor="let role of roles" (click)="selectedRole = role"
+        [class.bg-[var(--color-accent)]]="selectedRole === role" [class.text-background]="selectedRole === role"
+        class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors">
+        {{ role }}
+      </button>
+    </div>
+
+    <form class="mt-8 flex flex-col gap-6" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <app-input label="First Name" formControlName="firstName" [error]="getErrorMessage('firstName')"></app-input>
+          <app-input label="Last Name" formControlName="lastName" [error]="getErrorMessage('lastName')"></app-input>
+        </div>
+
+        <app-input label="Email" type="email" formControlName="email" [error]="getErrorMessage('email')"></app-input>
+
+        <app-input label="Password" type="password" formControlName="password"
+          [error]="getErrorMessage('password')"></app-input>
+
+        <app-input *ngIf="selectedRole === 'Employer/Recruiter'" label="Company Name" formControlName="companyName"
+          [error]="getErrorMessage('companyName')"></app-input>
+      </div>
+
+      <div class="flex items-start">
+        <div class="flex items-center h-5">
+          <input id="terms" type="checkbox" formControlName="acceptTerms"
+            class="rounded border-foreground-light/30 bg-transparent" />
+        </div>
+        <div class="ml-3">
+          <label for="terms" class="text-sm">
+            I agree to the
+            <a href="#" class="text-[var(--color-accent)] hover:underline">Terms of Service</a>
+            and
+            <a href="#" class="text-[var(--color-accent)] hover:underline">Privacy Policy</a>
+          </label>
+          <p *ngIf="showTermsError" class="text-red-500 text-xs mt-1">
+            You must accept the terms to continue
+          </p>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <app-button type="submit" variant="primary" [fullWidth]="true" [loading]="isLoading" class="w-full">
+          Create Account
+        </app-button>
+
+        <div class="relative">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-foreground-light/30"></div>
+          </div>
+          <div class="relative flex justify-center text-sm my-2">
+            <span class="px-2 text-xs bg-[var(--color-background)]">Or continue with</span>
+          </div>
+        </div>
+
+        <div class="w-full grid grid-cols-1 gap-4">
+          <app-button variant="secondary" type="button" (click)="signUpWithGoogle()" class="*:w-full">
+            <div class="w-full flex items-center justify-center gap-4">
+              <img src="/images/google.png" alt="" class="w-6">
+              <span>Google</span>
+            </div>
+          </app-button>
+          <app-button variant="secondary" type="button" (click)="signUpWithGithub()" class="*:w-full">
+            <div class="w-full flex items-center justify-center gap-4">
+              <img src="/images/github.png" alt="" class="w-6">
+              <span>GitHub</span>
+            </div>
+          </app-button>
+        </div>
+      </div>
+
+      <p class="text-center text-sm">
+        Already have an account?
+        <a routerLink="/login" class="text-[var(--color-accent)] hover:underline">
+          Sign in
+        </a>
+      </p>
+    </form>
+  </div>
+</main>

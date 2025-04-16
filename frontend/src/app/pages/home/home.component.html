@@ -1,0 +1,107 @@
+<!-- Hero Section -->
+<section class="relative container mx-auto px-4 py-24 flex flex-col items-center text-center">
+  <h1 class="animate-fade-in-down">Discover Talent Beyond Resumes</h1>
+  <p class="mt-6 text-[var(--color-foreground-light)] max-w-2xl animate-fade-in-up animation-delay-200">
+    Connect with opportunities that match your true skills and potential.
+    SkillMatch uses advanced AI to ensure the perfect fit for both talent and
+    employers.
+  </p>
+  <div class="mt-8 flex gap-4 animate-fade-in-up animation-delay-400">
+    <a routerLink="/register">
+      <app-button variant="primary" size="md">Get Started</app-button>
+    </a>
+    <a routerLink="/about">
+      <app-button variant="secondary" size="md">Learn More</app-button>
+    </a>
+  </div>
+
+  <img src="images/chat.jpeg" alt="Office chat illustration"
+    class="w-full aspect-video md:aspect-[2.75/1] mt-6 rounded-2xl" />
+</section>
+
+<!-- Features Section -->
+<section class="">
+  <h2 class="text-center mb-16">Our Core Features</h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    @for (feature of features; track feature.title) {
+    <div
+      class="p-6 pb-0 aspect-[4/3] rounded-2xl bg-background-light/30 border-2 border-foreground-light/40 flex flex-col gap-4 animate-scale-in">
+      <h4 class="mb-2">{{ feature.title }}</h4>
+      <p class="text-[var(--color-foreground-light)]">
+        {{ feature.description }}
+      </p>
+
+      <img [src]="feature.image" alt="" class="w-full md:w-3/5 aspect-square md:mx-auto rounded-t-2xl" />
+    </div>
+    }
+  </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="border-y border-foreground-light/30">
+  <h3 class="text-center mb-16">What Our Users Say</h3>
+
+  <div class="w-full flex items-start gap-8 overflow-x-auto hide-scrollbar">
+    @for (testimonial of testimonials; track testimonial.name) {
+    <div
+      class="p-6 max-w-[20rem] rounded-2xl bg-background-light/30 border-2 border-foreground-light/40 flex flex-col gap-4 shrink-0 animate-fade-in-up">
+      <div class="flex items-center">
+        <div
+          class="w-12 h-12 rounded-full bg-[var(--color-accent)] flex items-center justify-center text-[var(--color-background)] font-bold shrink-0">
+          {{ testimonial.name.charAt(0) }}
+        </div>
+
+        <div class="ml-4">
+          <p class="text-sm">{{ testimonial.name }}</p>
+          <p class="text-xs text-[var(--color-foreground-light)]">
+            {{ testimonial.role }} at {{ testimonial.company }}
+          </p>
+        </div>
+      </div>
+
+      <p class="italic text-xs ml-6 pl-4 border-l border-foreground-light/30">
+        "{{ testimonial.quote }}"
+      </p>
+    </div>
+    }
+  </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="container mx-auto px-4 py-24">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start max-w-6xl mx-auto">
+    <div class="lg:sticky lg:top-24">
+      <h2 class="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
+      <p class="text-foreground-light mb-6">
+        Find quick answers to common questions about SkillMatch platform
+      </p>
+      <app-button variant="primary" routerLink="/faq">
+        View All FAQs
+      </app-button>
+    </div>
+
+    <div class="space-y-4">
+      @for (faq of faqs; track faq.question) {
+      <div class="rounded-lg border border-foreground-light/20 bg-background-light/30 overflow-hidden">
+        <button (click)="toggleFaq(faq)"
+          class="w-full px-5 py-4 text-left flex items-center justify-between hover:bg-background-light/50"
+          [attr.aria-expanded]="faq.isOpen">
+          <span class="font-medium">{{ faq.question }}</span>
+          <span class="transform transition-transform duration-200 text-foreground-light"
+            [class.rotate-180]="faq.isOpen">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </span>
+        </button>
+        @if (faq.isOpen) {
+        <div class="px-5 py-4 text-foreground-light border-t border-foreground-light/10 animate-fade-in-down">
+          {{ faq.answer }}
+        </div>
+        }
+      </div>
+      }
+    </div>
+  </div>
+</section>
