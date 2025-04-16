@@ -32,8 +32,8 @@ export class LoginComponent {
     private router: Router
   ) {
     this.loginForm = this.fb.group({
-      email: ['seeker@example.com'],
-      password: ['password'],
+      email: [''],
+      password: [''],
       rememberMe: [true],
     });
   }
@@ -43,6 +43,11 @@ export class LoginComponent {
   }
 
   private async navigateToDashboard() {
+    if (this.authService.shouldShowOnboarding()) {
+      await this.router.navigate(['/onboarding']);
+      return;
+    }
+
     const dashboardType =
       this.authService.currentUser?.role === 'Job Seeker'
         ? 'seeker'

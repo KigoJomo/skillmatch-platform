@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { LogoComponent } from '../logo/logo.component';
 import { ButtonComponent } from '../button/button.component';
-import { AuthService, UserRole } from '../../services/auth.service';
+import { AuthService } from '../../services/auth.service';
 import { ThemeService, Theme } from '../../services/theme.service';
 
 @Component({
@@ -24,7 +24,9 @@ import { ThemeService, Theme } from '../../services/theme.service';
 
           <!-- Desktop Navigation -->
           <nav class="hidden md:flex items-center gap-6">
-            <ng-container *ngIf="!authService.currentUser; else loggedInNav">
+            <ng-container
+              *ngIf="!(authService.currentUser$ | async); else loggedInNav"
+            >
               <a routerLink="/" class="hover:text-[var(--color-accent)]"
                 >Home</a
               >
@@ -42,7 +44,7 @@ import { ThemeService, Theme } from '../../services/theme.service';
             <ng-template #loggedInNav>
               <ng-container
                 *ngIf="
-                  authService.currentUser?.role === 'Job Seeker';
+                  (authService.currentUser$ | async)?.role === 'Job Seeker';
                   else employerNav
                 "
               >
@@ -143,7 +145,9 @@ import { ThemeService, Theme } from '../../services/theme.service';
             </svg>
           </button>
 
-          <ng-container *ngIf="!authService.currentUser; else profileMenu">
+          <ng-container
+            *ngIf="!(authService.currentUser$ | async); else profileMenu"
+          >
             <a routerLink="/register">
               <app-button size="sm" variant="secondary">Sign Up</app-button>
             </a>
@@ -164,7 +168,7 @@ import { ThemeService, Theme } from '../../services/theme.service';
                   {{ getInitial() }}
                 </div>
                 <span class="text-sm hidden md:inline">{{
-                  authService.currentUser?.firstName
+                  (authService.currentUser$ | async)?.firstName
                 }}</span>
               </a>
               <app-button size="sm" variant="secondary" (click)="logout()"
@@ -182,7 +186,8 @@ export class HeaderComponent {
 
   constructor(
     public authService: AuthService,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private router: Router
   ) {
     this.currentTheme = this.themeService.getCurrentTheme();
     this.themeService.currentTheme$.subscribe((theme) => {

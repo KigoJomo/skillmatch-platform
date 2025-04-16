@@ -26,6 +26,9 @@
         <app-input label="Password" type="password" formControlName="password"
           [error]="getErrorMessage('password')"></app-input>
 
+        <app-input label="Confirm Password" type="password" formControlName="confirmPassword"
+          [error]="getErrorMessage('confirmPassword')"></app-input>
+
         <app-input *ngIf="selectedRole === 'Employer/Recruiter'" label="Company Name" formControlName="companyName"
           [error]="getErrorMessage('companyName')"></app-input>
       </div>
