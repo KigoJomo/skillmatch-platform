@@ -1,4 +1,3 @@
-// filepath: /home/roci/Athena/qa-qe/skillmatch/backend/src/controllers/AuthController.ts
 import { Request, Response } from 'express';
 import { AppDataSource } from '../data-source';
 import { User } from '../entities/User';
@@ -45,11 +44,16 @@ export class AuthController {
         role: savedUser.role,
       });
 
+      // Remove sensitive data and format response
+      const { passwordHash: _, ...userWithoutPassword } = savedUser;
+
       return res.status(201).json({
-        id: savedUser.id,
-        name: savedUser.name,
-        email: savedUser.email,
-        role: savedUser.role,
+        user: {
+          ...userWithoutPassword,
+          firstName: name.split(' ')[0],
+          lastName: name.split(' ')[1] || '',
+          onboardingCompleted: false,
+        },
         token,
       });
     } catch (error) {
@@ -64,9 +68,10 @@ export class AuthController {
     try {
       const { email, password } = req.body;
 
-      // Find user
+      // Find user with profile
       const user = await AppDataSource.getRepository(User).findOne({
         where: { email },
+        relations: ['profile'],
       });
 
       if (!user) {
@@ -86,12 +91,25 @@ export class AuthController {
         role: user.role,
       });
 
+      // Remove sensitive data
+      const { passwordHash, ...userWithoutPassword } = user;
+
+      // Check if profile has basic info to determine onboarding status
+      const onboardingCompleted = !!(
+        user.profile &&
+        (user.profile.bio || user.profile.location)
+      );
+
+      // Structure the response correctly
       return res.json({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        token,
+        user: {
+          // Nest user data under 'user' key
+          ...userWithoutPassword,
+          firstName: user.name.split(' ')[0],
+          lastName: user.name.split(' ')[1] || '',
+          onboardingCompleted,
+        },
+        token, // Keep token at the top level
       });
     } catch (error) {
       console.error('Login error:', error);

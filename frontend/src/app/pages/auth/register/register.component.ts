@@ -34,7 +34,6 @@ export class RegisterComponent {
   selectedRole: UserRole = 'Job Seeker';
   registerForm: FormGroup;
   isLoading = false;
-  showTermsError = false;
   error: string | null = null;
 
   constructor(
@@ -49,8 +48,7 @@ export class RegisterComponent {
         email: ['', [Validators.required, Validators.email]],
         password: ['', [Validators.required, Validators.minLength(8)]],
         confirmPassword: ['', [Validators.required]],
-        companyName: [''],
-        acceptTerms: [true],
+        acceptTerms: [false, [Validators.requiredTrue]],
       },
       {
         validators: RegisterComponent.passwordMatchValidator,
@@ -74,21 +72,41 @@ export class RegisterComponent {
   };
 
   getErrorMessage(field: string): string | undefined {
-    if (field === 'confirmPassword') {
-      if (this.registerForm.get('confirmPassword')?.hasError('required')) {
-        return 'Password confirmation is required';
-      }
-      if (
-        this.registerForm.get('confirmPassword')?.hasError('passwordMismatch')
-      ) {
-        return 'Passwords do not match';
-      }
+    const control = this.registerForm.get(field);
+    if (!control) return undefined;
+
+    if (control.hasError('required')) {
+      return `${field.charAt(0).toUpperCase() + field.slice(1)} is required`;
     }
-    return undefined; // No validation in development
+    if (control.hasError('email')) {
+      return 'Please enter a valid email address';
+    }
+    if (control.hasError('minlength')) {
+      return 'Password must be at least 8 characters long';
+    }
+    if (control.hasError('passwordMismatch')) {
+      return 'Passwords do not match';
+    }
+    if (field === 'acceptTerms' && control.hasError('requiredTrue')) {
+      return 'You must accept the terms and conditions';
+    }
+    return undefined;
   }
 
   async onSubmit() {
+    if (this.registerForm.invalid) {
+      Object.keys(this.registerForm.controls).forEach((key) => {
+        const control = this.registerForm.get(key);
+        if (control?.invalid) {
+          control.markAsTouched();
+        }
+      });
+      return;
+    }
+
     this.isLoading = true;
+    this.error = null;
+
     try {
       const user = await this.authService.register(
         this.registerForm.value.firstName,
@@ -97,6 +115,7 @@ export class RegisterComponent {
         this.registerForm.value.password,
         this.selectedRole
       );
+
       if (!user.onboardingCompleted) {
         await this.router.navigate(['/onboarding']);
       } else {
@@ -104,52 +123,14 @@ export class RegisterComponent {
           user.role === 'Job Seeker' ? 'seeker' : 'employer';
         await this.router.navigate([`/dashboard/${dashboardType}`]);
       }
-    } catch (error) {
-      this.error = 'Registration failed. Please try again.';
+    } catch (error: any) {
+      if (error?.status === 400) {
+        this.error = 'Email is already registered';
+      } else {
+        this.error = 'Registration failed. Please try again.';
+      }
     } finally {
       this.isLoading = false;
-    }
-  }
-
-  async signUpWithGoogle() {
-    try {
-      const user = await this.authService.register(
-        'Google',
-        'User',
-        `google${Math.random().toString(36).substring(7)}@example.com`,
-        'password',
-        this.selectedRole
-      );
-      if (!user.onboardingCompleted) {
-        await this.router.navigate(['/onboarding']);
-      } else {
-        const dashboardType =
-          user.role === 'Job Seeker' ? 'seeker' : 'employer';
-        await this.router.navigate([`/dashboard/${dashboardType}`]);
-      }
-    } catch (error) {
-      this.error = 'Registration failed. Please try again.';
-    }
-  }
-
-  async signUpWithGithub() {
-    try {
-      const user = await this.authService.register(
-        'Github',
-        'User',
-        `github${Math.random().toString(36).substring(7)}@example.com`,
-        'password',
-        this.selectedRole
-      );
-      if (!user.onboardingCompleted) {
-        await this.router.navigate(['/onboarding']);
-      } else {
-        const dashboardType =
-          user.role === 'Job Seeker' ? 'seeker' : 'employer';
-        await this.router.navigate([`/dashboard/${dashboardType}`]);
-      }
-    } catch (error) {
-      this.error = 'Registration failed. Please try again.';
     }
   }
 }

@@ -13,7 +13,20 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+// Configure CORS explicitly
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || 'http://localhost:4200', // Allow your frontend origin
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Allow standard methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // IMPORTANT: Allow Authorization header
+  credentials: true, // If you need cookies or sessions
+};
+
+app.use(cors(corsOptions)); // Use configured CORS
+
+// Enable pre-flight requests for all routes
+// This is important for complex requests (like those with Authorization headers)
+app.options('*', cors(corsOptions));
+
 app.use(helmet());
 app.use(express.json());
 

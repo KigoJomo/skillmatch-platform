@@ -29,57 +29,29 @@
         <app-input label="Confirm Password" type="password" formControlName="confirmPassword"
           [error]="getErrorMessage('confirmPassword')"></app-input>
 
-        <app-input *ngIf="selectedRole === 'Employer/Recruiter'" label="Company Name" formControlName="companyName"
-          [error]="getErrorMessage('companyName')"></app-input>
-      </div>
-
-      <div class="flex items-start">
-        <div class="flex items-center h-5">
-          <input id="terms" type="checkbox" formControlName="acceptTerms"
-            class="rounded border-foreground-light/30 bg-transparent" />
-        </div>
-        <div class="ml-3">
-          <label for="terms" class="text-sm">
-            I agree to the
-            <a href="#" class="text-[var(--color-accent)] hover:underline">Terms of Service</a>
-            and
-            <a href="#" class="text-[var(--color-accent)] hover:underline">Privacy Policy</a>
-          </label>
-          <p *ngIf="showTermsError" class="text-red-500 text-xs mt-1">
-            You must accept the terms to continue
-          </p>
-        </div>
-      </div>
-
-      <div class="space-y-4">
-        <app-button type="submit" variant="primary" [fullWidth]="true" [loading]="isLoading" class="w-full">
-          Create Account
-        </app-button>
-
-        <div class="relative">
-          <div class="absolute inset-0 flex items-center">
-            <div class="w-full border-t border-foreground-light/30"></div>
+        <div class="flex items-start">
+          <div class="flex items-center h-5">
+            <input id="accept-terms" type="checkbox" formControlName="acceptTerms"
+              class="rounded border-foreground-light/30 bg-transparent" />
           </div>
-          <div class="relative flex justify-center text-sm my-2">
-            <span class="px-2 text-xs bg-[var(--color-background)]">Or continue with</span>
+          <div class="ml-3">
+            <label for="accept-terms" class="text-sm">
+              I accept the
+              <a routerLink="/terms" class="text-[var(--color-accent)] hover:underline">Terms and Conditions</a>
+            </label>
+            <p *ngIf="registerForm.get('acceptTerms')?.touched && getErrorMessage('acceptTerms')"
+              class="text-red-500 text-xs mt-1">
+              {{ getErrorMessage('acceptTerms') }}
+            </p>
           </div>
         </div>
-
-        <div class="w-full grid grid-cols-1 gap-4">
-          <app-button variant="secondary" type="button" (click)="signUpWithGoogle()" class="*:w-full">
-            <div class="w-full flex items-center justify-center gap-4">
-              <img src="/images/google.png" alt="" class="w-6">
-              <span>Google</span>
-            </div>
-          </app-button>
-          <app-button variant="secondary" type="button" (click)="signUpWithGithub()" class="*:w-full">
-            <div class="w-full flex items-center justify-center gap-4">
-              <img src="/images/github.png" alt="" class="w-6">
-              <span>GitHub</span>
-            </div>
-          </app-button>
-        </div>
       </div>
+
+      <div *ngIf="error" class="text-red-500 text-sm text-center">{{ error }}</div>
+
+      <app-button type="submit" variant="primary" [fullWidth]="true" [loading]="isLoading">
+        Create Account
+      </app-button>
 
       <p class="text-center text-sm">
         Already have an account?

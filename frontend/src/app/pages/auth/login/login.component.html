@@ -30,35 +30,11 @@
         </a>
       </div>
 
-      <div class="space-y-4">
-        <app-button type="submit" variant="primary" [fullWidth]="true" class="w-full" [loading]="isLoading">
-          Sign In
-        </app-button>
+      <div *ngIf="error" class="text-red-500 text-sm text-center">{{ error }}</div>
 
-        <div class="relative">
-          <div class="absolute inset-0 flex items-center">
-            <div class="w-full border-t border-foreground-light/30"></div>
-          </div>
-          <div class="relative flex justify-center text-sm my-2">
-            <span class="px-2 text-xs bg-[var(--color-background)]">Or continue with</span>
-          </div>
-        </div>
-
-        <div class="w-full grid grid-cols-1 gap-4">
-          <app-button variant="secondary" type="button" (click)="signInWithGoogle()" class="*:w-full">
-            <div class="w-full flex items-center justify-center gap-4">
-              <img src="/images/google.png" alt="" class="w-6">
-              <span>Google</span>
-            </div>
-          </app-button>
-          <app-button variant="secondary" type="button" (click)="signInWithGithub()" class="*:w-full">
-            <div class="w-full flex items-center justify-center gap-4">
-              <img src="/images/github.png" alt="" class="w-6">
-              <span>GitHub</span>
-            </div>
-          </app-button>
-        </div>
-      </div>
+      <app-button type="submit" variant="primary" [fullWidth]="true" [loading]="isLoading">
+        Sign In
+      </app-button>
 
       <p class="text-center text-sm">
         Don't have an account?
