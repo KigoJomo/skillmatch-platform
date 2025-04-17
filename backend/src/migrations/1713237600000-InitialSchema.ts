@@ -1,136 +1,494 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  Table,
+  TableForeignKey,
+} from 'typeorm';
+import { UserRole } from '../entities/User';
+import { MessageRole } from '../entities/ChatMessage';
+import { ApplicationStatus } from '../entities/Application';
 
 export class InitialSchema1713237600000 implements MigrationInterface {
   name = 'InitialSchema1713237600000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Create UUID extension if it doesn't exist
-    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
-
     // Create users table
-    await queryRunner.query(`
-            CREATE TABLE "users" (
-                "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-                "name" character varying NOT NULL,
-                "email" character varying NOT NULL,
-                "passwordHash" character varying NOT NULL,
-                "role" character varying NOT NULL DEFAULT 'seeker',
-                "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
-                "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
-                CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3" UNIQUE ("email"),
-                CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id")
-            )
-        `);
+    await queryRunner.createTable(
+      new Table({
+        name: 'users',
+        columns: [
+          {
+            name: 'id',
+            type: 'uuid',
+            isPrimary: true,
+            generationStrategy: 'uuid',
+            default: 'uuid_generate_v4()',
+          },
+          {
+            name: 'name',
+            type: 'varchar',
+          },
+          {
+            name: 'email',
+            type: 'varchar',
+            isUnique: true,
+          },
+          {
+            name: 'passwordHash',
+            type: 'varchar',
+          },
+          {
+            name: 'role',
+            type: 'enum',
+            enum: ['Job Seeker', 'Employer/Recruiter'],
+          },
+          {
+            name: 'createdAt',
+            type: 'timestamp',
+            default: 'now()',
+          },
+          {
+            name: 'updatedAt',
+            type: 'timestamp',
+            default: 'now()',
+          },
+        ],
+      })
+    );
 
     // Create profiles table
-    await queryRunner.query(`
-            CREATE TABLE "profiles" (
-                "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-                "bio" character varying,
-                "skills" text,
-                "experience" jsonb,
-                "location" character varying,
-                "education" character varying,
-                "avatarUrl" character varying,
-                "resumeUrl" character varying,
-                "linkedIn" character varying,
-                "github" character varying,
-                "website" character varying,
-                "companyName" character varying,
-                "companySize" character varying,
-                "industry" character varying,
-                "userId" uuid,
-                CONSTRAINT "REL_315ecd98bd1a42dcf2ec4e2e98" UNIQUE ("userId"),
-                CONSTRAINT "PK_8e520eb4da7dc01d0e190447c8e" PRIMARY KEY ("id")
-            )
-        `);
+    await queryRunner.createTable(
+      new Table({
+        name: 'profiles',
+        columns: [
+          {
+            name: 'id',
+            type: 'uuid',
+            isPrimary: true,
+            generationStrategy: 'uuid',
+            default: 'uuid_generate_v4()',
+          },
+          {
+            name: 'userId',
+            type: 'uuid',
+          },
+          {
+            name: 'bio',
+            type: 'text',
+            isNullable: true,
+          },
+          {
+            name: 'phone',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'skills',
+            type: 'text',
+            isArray: true,
+            isNullable: true,
+          },
+          {
+            name: 'experienceLevel',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'jobTypes',
+            type: 'text',
+            isArray: true,
+            isNullable: true,
+          },
+          {
+            name: 'salaryExpectation',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'preferredLocation',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'location',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'experience',
+            type: 'jsonb',
+            isNullable: true,
+          },
+          {
+            name: 'education',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'avatarUrl',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'resumeUrl',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'linkedIn',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'github',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'website',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'companyName',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'companySize',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'industry',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'description',
+            type: 'text',
+            isNullable: true,
+          },
+          {
+            name: 'workLocations',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'interviewProcess',
+            type: 'text',
+            isNullable: true,
+          },
+          {
+            name: 'benefits',
+            type: 'text',
+            isNullable: true,
+          },
+          {
+            name: 'salaryRange',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'onboardingCompleted',
+            type: 'boolean',
+            default: false,
+          },
+        ],
+      })
+    );
 
     // Create jobs table
-    await queryRunner.query(`
-            CREATE TABLE "jobs" (
-                "id" SERIAL NOT NULL,
-                "title" character varying NOT NULL,
-                "description" text NOT NULL,
-                "location" character varying NOT NULL,
-                "requirements" text NOT NULL,
-                "type" character varying NOT NULL,
-                "salary" character varying,
-                "postedDate" TIMESTAMP NOT NULL DEFAULT now(),
-                "postedById" uuid,
-                CONSTRAINT "PK_cf0a6c42b72fcc7f7c237def345" PRIMARY KEY ("id")
-            )
-        `);
+    await queryRunner.createTable(
+      new Table({
+        name: 'jobs',
+        columns: [
+          {
+            name: 'id',
+            type: 'uuid',
+            isPrimary: true,
+            generationStrategy: 'uuid',
+            default: 'uuid_generate_v4()',
+          },
+          {
+            name: 'title',
+            type: 'varchar',
+          },
+          {
+            name: 'description',
+            type: 'text',
+          },
+          {
+            name: 'company',
+            type: 'varchar',
+          },
+          {
+            name: 'location',
+            type: 'varchar',
+          },
+          {
+            name: 'salary',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'jobType',
+            type: 'varchar',
+          },
+          {
+            name: 'experienceLevel',
+            type: 'varchar',
+          },
+          {
+            name: 'requiredSkills',
+            type: 'text',
+            isArray: true,
+          },
+          {
+            name: 'isActive',
+            type: 'boolean',
+            default: true,
+          },
+          {
+            name: 'postedDate',
+            type: 'timestamp',
+            default: 'now()',
+          },
+          {
+            name: 'postedById',
+            type: 'uuid',
+          },
+          {
+            name: 'createdAt',
+            type: 'timestamp',
+            default: 'now()',
+          },
+          {
+            name: 'updatedAt',
+            type: 'timestamp',
+            default: 'now()',
+          },
+        ],
+      })
+    );
 
     // Create applications table
-    await queryRunner.query(`
-            CREATE TABLE "applications" (
-                "id" SERIAL NOT NULL,
-                "coverLetter" text,
-                "status" character varying NOT NULL DEFAULT 'pending',
-                "appliedDate" TIMESTAMP NOT NULL DEFAULT now(),
-                "userId" uuid,
-                "jobId" integer,
-                CONSTRAINT "PK_938c0a27255637bde919591888f" PRIMARY KEY ("id")
-            )
-        `);
+    await queryRunner.createTable(
+      new Table({
+        name: 'applications',
+        columns: [
+          {
+            name: 'id',
+            type: 'uuid',
+            isPrimary: true,
+            generationStrategy: 'uuid',
+            default: 'uuid_generate_v4()',
+          },
+          {
+            name: 'jobId',
+            type: 'uuid',
+          },
+          {
+            name: 'userId',
+            type: 'uuid',
+          },
+          {
+            name: 'coverLetter',
+            type: 'text',
+            isNullable: true,
+          },
+          {
+            name: 'resumeUrl',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
+            name: 'answers',
+            type: 'jsonb',
+            isNullable: true,
+          },
+          {
+            name: 'matchScore',
+            type: 'float',
+            isNullable: true,
+          },
+          {
+            name: 'status',
+            type: 'enum',
+            enum: Object.values(ApplicationStatus),
+            default: "'pending'",
+          },
+          {
+            name: 'appliedDate',
+            type: 'timestamp',
+            default: 'now()',
+          },
+          {
+            name: 'updatedAt',
+            type: 'timestamp',
+            default: 'now()',
+          },
+        ],
+      })
+    );
 
-    // Add foreign keys
-    await queryRunner.query(`
-            ALTER TABLE "profiles"
-            ADD CONSTRAINT "FK_315ecd98bd1a42dcf2ec4e2e985"
-            FOREIGN KEY ("userId")
-            REFERENCES "users"("id")
-            ON DELETE CASCADE
-            ON UPDATE NO ACTION
-        `);
+    // Create chat_sessions table
+    await queryRunner.createTable(
+      new Table({
+        name: 'chat_sessions',
+        columns: [
+          {
+            name: 'id',
+            type: 'uuid',
+            isPrimary: true,
+            generationStrategy: 'uuid',
+            default: 'uuid_generate_v4()',
+          },
+          {
+            name: 'userId',
+            type: 'uuid',
+          },
+          {
+            name: 'sessionStart',
+            type: 'timestamp',
+            default: 'now()',
+          },
+          {
+            name: 'sessionEnd',
+            type: 'timestamp',
+            isNullable: true,
+          },
+          {
+            name: 'context',
+            type: 'jsonb',
+            isNullable: true,
+          },
+          {
+            name: 'createdAt',
+            type: 'timestamp',
+            default: 'now()',
+          },
+          {
+            name: 'updatedAt',
+            type: 'timestamp',
+            default: 'now()',
+          },
+        ],
+      })
+    );
 
-    await queryRunner.query(`
-            ALTER TABLE "jobs"
-            ADD CONSTRAINT "FK_919fcf99a47a47f48ebf3127647"
-            FOREIGN KEY ("postedById")
-            REFERENCES "users"("id")
-            ON DELETE SET NULL
-            ON UPDATE NO ACTION
-        `);
+    // Create chat_messages table
+    await queryRunner.createTable(
+      new Table({
+        name: 'chat_messages',
+        columns: [
+          {
+            name: 'id',
+            type: 'uuid',
+            isPrimary: true,
+            generationStrategy: 'uuid',
+            default: 'uuid_generate_v4()',
+          },
+          {
+            name: 'sessionId',
+            type: 'uuid',
+          },
+          {
+            name: 'role',
+            type: 'enum',
+            enum: Object.values(MessageRole),
+          },
+          {
+            name: 'content',
+            type: 'text',
+          },
+          {
+            name: 'timestamp',
+            type: 'timestamp',
+            default: 'now()',
+          },
+          {
+            name: 'metadata',
+            type: 'jsonb',
+            isNullable: true,
+          },
+          {
+            name: 'relevantData',
+            type: 'jsonb',
+            isNullable: true,
+          },
+        ],
+      })
+    );
 
-    await queryRunner.query(`
-            ALTER TABLE "applications"
-            ADD CONSTRAINT "FK_3091c4cb421928bba29a965c8e7"
-            FOREIGN KEY ("userId")
-            REFERENCES "users"("id")
-            ON DELETE CASCADE
-            ON UPDATE NO ACTION
-        `);
+    // Add foreign key constraints
+    await queryRunner.createForeignKey(
+      'profiles',
+      new TableForeignKey({
+        columnNames: ['userId'],
+        referencedColumnNames: ['id'],
+        referencedTableName: 'users',
+        onDelete: 'CASCADE',
+      })
+    );
 
-    await queryRunner.query(`
-            ALTER TABLE "applications"
-            ADD CONSTRAINT "FK_9f7a5fd25da40d05c651acc2ae9"
-            FOREIGN KEY ("jobId")
-            REFERENCES "jobs"("id")
-            ON DELETE CASCADE
-            ON UPDATE NO ACTION
-        `);
+    await queryRunner.createForeignKey(
+      'jobs',
+      new TableForeignKey({
+        columnNames: ['postedById'],
+        referencedColumnNames: ['id'],
+        referencedTableName: 'users',
+        onDelete: 'CASCADE',
+      })
+    );
+
+    await queryRunner.createForeignKey(
+      'applications',
+      new TableForeignKey({
+        columnNames: ['jobId'],
+        referencedColumnNames: ['id'],
+        referencedTableName: 'jobs',
+        onDelete: 'CASCADE',
+      })
+    );
+
+    await queryRunner.createForeignKey(
+      'applications',
+      new TableForeignKey({
+        columnNames: ['userId'],
+        referencedColumnNames: ['id'],
+        referencedTableName: 'users',
+        onDelete: 'CASCADE',
+      })
+    );
+
+    await queryRunner.createForeignKey(
+      'chat_sessions',
+      new TableForeignKey({
+        columnNames: ['userId'],
+        referencedColumnNames: ['id'],
+        referencedTableName: 'users',
+        onDelete: 'CASCADE',
+      })
+    );
+
+    await queryRunner.createForeignKey(
+      'chat_messages',
+      new TableForeignKey({
+        columnNames: ['sessionId'],
+        referencedColumnNames: ['id'],
+        referencedTableName: 'chat_sessions',
+        onDelete: 'CASCADE',
+      })
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    // Drop foreign keys first
-    await queryRunner.query(
-      `ALTER TABLE "applications" DROP CONSTRAINT "FK_9f7a5fd25da40d05c651acc2ae9"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "applications" DROP CONSTRAINT "FK_3091c4cb421928bba29a965c8e7"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "jobs" DROP CONSTRAINT "FK_919fcf99a47a47f48ebf3127647"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "profiles" DROP CONSTRAINT "FK_315ecd98bd1a42dcf2ec4e2e985"`
-    );
-
-    // Drop tables
-    await queryRunner.query(`DROP TABLE "applications"`);
-    await queryRunner.query(`DROP TABLE "jobs"`);
-    await queryRunner.query(`DROP TABLE "profiles"`);
-    await queryRunner.query(`DROP TABLE "users"`);
+    await queryRunner.dropTable('chat_messages');
+    await queryRunner.dropTable('chat_sessions');
+    await queryRunner.dropTable('applications');
+    await queryRunner.dropTable('jobs');
+    await queryRunner.dropTable('profiles');
+    await queryRunner.dropTable('users');
   }
 }

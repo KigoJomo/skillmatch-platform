@@ -12,9 +12,9 @@ import { Job } from './Job';
 import { Application } from './Application';
 
 export enum UserRole {
-  SEEKER = 'seeker',
-  EMPLOYER = 'employer',
-  ADMIN = 'admin',
+  SEEKER = 'Job Seeker',
+  EMPLOYER = 'Employer/Recruiter',
+  ADMIN = 'Admin',
 }
 
 @Entity('users')

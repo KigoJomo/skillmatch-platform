@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '../data-source';
 import { Profile } from '../entities/Profile';
 import { User } from '../entities/User';
+import { AppError } from '../middleware/errorMiddleware';
 
 export class ProfileController {
   static async getProfile(
@@ -41,26 +42,12 @@ export class ProfileController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const userId = req.body.userId; // From JWT middleware
-      const userRole = req.body.userRole;
-      const {
-        bio,
-        skills,
-        experience,
-        location,
-        education,
-        avatarUrl,
-        resumeUrl,
-        linkedIn,
-        github,
-        website,
-        companyName,
-        companySize,
-        industry,
-      } = req.body;
+      const userId = req.body.userId;
+      const profileData = req.body;
+      delete profileData.userId; // Remove userId from update data
 
       const profileRepository = AppDataSource.getRepository(Profile);
-      let profile = await profileRepository.findOne({
+      const profile = await profileRepository.findOne({
         where: { user: { id: userId } },
         relations: ['user'],
       });
@@ -70,24 +57,8 @@ export class ProfileController {
         return;
       }
 
-      // Update profile fields
-      if (bio !== undefined) profile.bio = bio;
-      if (skills !== undefined) profile.skills = skills;
-      if (experience !== undefined) profile.experience = experience;
-      if (location !== undefined) profile.location = location;
-      if (education !== undefined) profile.education = education;
-      if (avatarUrl !== undefined) profile.avatarUrl = avatarUrl;
-      if (resumeUrl !== undefined) profile.resumeUrl = resumeUrl;
-      if (linkedIn !== undefined) profile.linkedIn = linkedIn;
-      if (github !== undefined) profile.github = github;
-      if (website !== undefined) profile.website = website;
-
-      // Update employer-specific fields if user is an employer
-      if (userRole === 'employer') {
-        if (companyName !== undefined) profile.companyName = companyName;
-        if (companySize !== undefined) profile.companySize = companySize;
-        if (industry !== undefined) profile.industry = industry;
-      }
+      // Update all provided fields
+      Object.assign(profile, profileData);
 
       const updatedProfile = await profileRepository.save(profile);
 
@@ -199,6 +170,81 @@ export class ProfileController {
         message: 'Avatar uploaded successfully',
         avatarUrl,
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async skipOnboarding(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const userId = req.body.userId;
+
+      const profileRepository = AppDataSource.getRepository(Profile);
+      let profile = await profileRepository.findOne({
+        where: { user: { id: userId } },
+        relations: ['user'],
+      });
+
+      if (!profile) {
+        res.status(404).json({ error: 'Profile not found' });
+        return;
+      }
+
+      profile.onboardingCompleted = true;
+      profile = await profileRepository.save(profile);
+
+      // Remove sensitive information
+      if (profile.user) {
+        const { passwordHash, ...userWithoutPassword } = profile.user;
+        profile.user = userWithoutPassword as User;
+      }
+
+      res.json(profile);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async completeOnboarding(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const userId = req.body.userId;
+      const profileData = req.body;
+      delete profileData.userId;
+
+      const profileRepository = AppDataSource.getRepository(Profile);
+      let profile = await profileRepository.findOne({
+        where: { user: { id: userId } },
+        relations: ['user'],
+      });
+
+      if (!profile) {
+        res.status(404).json({ error: 'Profile not found' });
+        return;
+      }
+
+      // Update all provided fields
+      Object.assign(profile, profileData);
+
+      // Mark onboarding as completed
+      profile.onboardingCompleted = true;
+
+      profile = await profileRepository.save(profile);
+
+      // Remove sensitive information
+      if (profile.user) {
+        const { passwordHash, ...userWithoutPassword } = profile.user;
+        profile.user = userWithoutPassword as User;
+      }
+
+      res.json(profile);
     } catch (error) {
       next(error);
     }

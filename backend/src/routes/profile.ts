@@ -32,14 +32,23 @@ const uploadResume = wrapHandler(
 const uploadAvatar = wrapHandler(
   ProfileController.uploadAvatar.bind(ProfileController)
 );
+const skipOnboarding = wrapHandler(
+  ProfileController.skipOnboarding.bind(ProfileController)
+);
+const completeOnboarding = wrapHandler(
+  ProfileController.completeOnboarding.bind(ProfileController)
+);
 
 // Protected routes - all routes require authentication
 router.use(authenticate);
 
 router.get('/', asyncHandler(getProfile));
+router.post('/', asyncHandler(completeOnboarding));
 router.put('/', asyncHandler(updateProfile));
-router.get('/:id', asyncHandler(getProfileById));
+router.patch('/onboarding', asyncHandler(skipOnboarding));
+router.post('/onboarding', asyncHandler(completeOnboarding));
 router.post('/resume', asyncHandler(uploadResume));
 router.post('/avatar', asyncHandler(uploadAvatar));
+router.get('/:id', asyncHandler(getProfileById)); // Moved to last since it has a parameter
 
 export default router;

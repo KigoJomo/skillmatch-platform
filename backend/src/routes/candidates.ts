@@ -35,8 +35,11 @@ const updateCandidateStatus = wrapHandler(
 router.use(authenticate);
 router.use(authorize([UserRole.EMPLOYER]));
 
+// Routes without parameters first
 router.get('/', asyncHandler(getAllCandidates));
 router.get('/stats', asyncHandler(getCandidateStats));
+
+// Routes with parameters last
 router.get('/:id', asyncHandler(getCandidateById));
 router.patch('/:id/status', asyncHandler(updateCandidateStatus));
 

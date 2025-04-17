@@ -37,8 +37,11 @@ const withdrawApplication = wrapHandler(
 // Protected routes - all routes require authentication
 router.use(authenticate);
 
+// Routes without parameters first
 router.get('/', asyncHandler(getAllApplications));
 router.post('/', authorize([UserRole.SEEKER]), asyncHandler(createApplication));
+
+// Routes with parameters last
 router.get('/:id', asyncHandler(getApplicationById));
 router.patch(
   '/:id/status',

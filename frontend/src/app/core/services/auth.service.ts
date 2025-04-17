@@ -20,7 +20,7 @@ interface DecodedToken {
 })
 export class AuthService {
   private apiUrl = environment.apiUrl; // Use environment variable
-  private tokenKey = 'authToken';
+  private tokenKey = 'token';
   private currentUserSubject = new BehaviorSubject<DecodedToken | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
   // Assuming UserProfile includes onboarding status

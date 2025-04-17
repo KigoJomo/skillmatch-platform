@@ -1,4 +1,3 @@
-// filepath: /home/roci/Athena/qa-qe/skillmatch/backend/src/routes/jobs.ts
 import { Router, Request, Response, NextFunction } from 'express';
 import { JobController } from '../controllers/JobController';
 import { authenticate, authorize } from '../middleware/authMiddleware';
@@ -27,7 +26,6 @@ const deleteJob = wrapHandler(JobController.deleteJob.bind(JobController));
 
 // Public routes
 router.get('/', asyncHandler(getAllJobs));
-router.get('/:id', asyncHandler(getJobById));
 
 // Protected routes with authentication and authorization
 router.post(
@@ -36,6 +34,9 @@ router.post(
   authorize([UserRole.EMPLOYER]),
   asyncHandler(createJob)
 );
+
+// Routes with parameters should come last
+router.get('/:id', asyncHandler(getJobById));
 router.put(
   '/:id',
   authenticate,

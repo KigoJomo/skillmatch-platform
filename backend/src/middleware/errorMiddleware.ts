@@ -73,3 +73,23 @@ export const asyncHandler = (fn: AsyncRequestHandler): RequestHandler => {
     }
   };
 };
+
+/**
+ * Middleware to sanitize URLs before they reach the router
+ */
+export const urlSanitizer = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  // If the URL contains a protocol, respond with 400 Bad Request
+  if (req.url.match(/^https?:\/\//i)) {
+    const error = new Error(
+      'Invalid URL format: URLs should not include protocol'
+    ) as AppError;
+    error.statusCode = 400;
+    next(error);
+    return;
+  }
+  next();
+};

@@ -28,7 +28,8 @@
     "pg": "^8.14.1",
     "reflect-metadata": "^0.2.2",
     "ts-node": "^10.9.2",
-    "typeorm": "^0.3.22"
+    "typeorm": "^0.3.22",
+    "@google/generative-ai": "^0.2.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

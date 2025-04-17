@@ -38,93 +38,14 @@ interface JwtPayload {
   providedIn: 'root',
 })
 export class AuthService {
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  private apiUrl = '/api';
+  private currentUserSubject = new BehaviorSubject<User | null>(
+    this.loadInitialUser()
+  );
   currentUser$ = this.currentUserSubject.asObservable();
-  private tokenExpirationTimer: any;
+  currentUser: User | null = this.loadInitialUser();
 
-  private readonly apiUrl = environment.apiUrl;
-
-  constructor(private router: Router, private http: HttpClient) {
-    const storedUser = localStorage.getItem('currentUser');
-    const token = this.getToken();
-
-    if (storedUser !== null && token) {
-      try {
-        const user = JSON.parse(storedUser);
-        this.currentUserSubject.next(user);
-        this.setupTokenExpirationTimer(token);
-      } catch (e) {
-        this.clearAuthData();
-        console.error('Invalid stored user data:', e);
-      }
-    }
-  }
-
-  get currentUser(): User | null {
-    return this.currentUserSubject.value;
-  }
-
-  private setToken(token: string): void {
-    localStorage.setItem('token', token);
-    this.setupTokenExpirationTimer(token);
-  }
-
-  private setupTokenExpirationTimer(token: string): void {
-    try {
-      const decodedToken = jwtDecode<JwtPayload>(token);
-      const expirationTime = decodedToken.exp * 1000; // Convert to milliseconds
-      const timeUntilExpiration = expirationTime - Date.now();
-
-      if (timeUntilExpiration <= 0) {
-        this.clearAuthData();
-        return;
-      }
-
-      // Clear any existing timer
-      if (this.tokenExpirationTimer) {
-        clearTimeout(this.tokenExpirationTimer);
-      }
-
-      // Set new timer
-      this.tokenExpirationTimer = setTimeout(() => {
-        this.clearAuthData();
-        this.router.navigate(['/login']);
-      }, timeUntilExpiration);
-    } catch (e) {
-      console.error('Error setting up token expiration timer:', e);
-      this.clearAuthData();
-    }
-  }
-
-  private clearAuthData(): void {
-    this.currentUserSubject.next(null);
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('token');
-    if (this.tokenExpirationTimer) {
-      clearTimeout(this.tokenExpirationTimer);
-    }
-  }
-
-  private handleError(error: HttpErrorResponse): never {
-    let errorMessage: string;
-
-    if (error.status === 400) {
-      errorMessage = error.error?.message || 'Invalid credentials';
-    } else if (error.status === 401) {
-      errorMessage = 'Authentication required. Please log in again.';
-      this.clearAuthData();
-    } else if (error.status === 403) {
-      errorMessage = 'You do not have permission to perform this action';
-    } else if (!navigator.onLine) {
-      errorMessage = 'No internet connection. Please check your network';
-    } else {
-      errorMessage = 'An unexpected error occurred. Please try again later';
-    }
-
-    const enhancedError = new Error(errorMessage) as any;
-    enhancedError.status = error.status;
-    throw enhancedError;
-  }
+  constructor(private http: HttpClient, private router: Router) {}
 
   async login(email: string, password: string): Promise<User> {
     try {
@@ -135,26 +56,19 @@ export class AuthService {
         )
       );
 
-      console.log('Login API Response:', response);
-
-      // Check if response and necessary data exist
-      if (response?.token && response.user) {
-        // Added check for response.user
-        this.currentUserSubject.next(response.user);
-        // Store user data correctly
-        localStorage.setItem('currentUser', JSON.stringify(response.user));
+      if (response?.token) {
         this.setToken(response.token);
+        this.currentUserSubject.next(response.user);
+        this.currentUser = response.user;
+        localStorage.setItem('currentUser', JSON.stringify(response.user));
         return response.user;
       }
-      // Throw a more specific error if data is missing
-      console.error('Login failed: Invalid response structure.', response);
-      throw new Error('Login failed: Invalid response from server.');
+      throw new Error('Login failed');
     } catch (error) {
-      console.error('Login error:', error); // Log the error
       if (error instanceof HttpErrorResponse) {
         throw this.handleError(error);
       }
-      throw error; // Re-throw original or new error
+      throw error;
     }
   }
 
@@ -166,17 +80,17 @@ export class AuthService {
     role: UserRole
   ): Promise<User> {
     try {
-      const fullName = `${firstName} ${lastName}`;
       const response = await firstValueFrom(
         this.http.post<{ user: User; token: string }>(
           `${this.apiUrl}/auth/register`,
-          { name: fullName, email, password, role }
+          { firstName, lastName, email, password, role }
         )
       );
 
       if (response?.token) {
         this.setToken(response.token);
         this.currentUserSubject.next(response.user);
+        this.currentUser = response.user;
         localStorage.setItem('currentUser', JSON.stringify(response.user));
         return response.user;
       }
@@ -189,6 +103,50 @@ export class AuthService {
     }
   }
 
+  async completeOnboarding(profileData: UserProfile): Promise<void> {
+    try {
+      const response = await firstValueFrom(
+        this.http.post<Profile>(`${this.apiUrl}/profile`, profileData)
+      );
+
+      if (response && this.currentUser) {
+        const updatedUser = { ...this.currentUser, onboardingCompleted: true };
+        this.currentUserSubject.next(updatedUser);
+        this.currentUser = updatedUser;
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      }
+    } catch (error) {
+      if (error instanceof HttpErrorResponse) {
+        throw this.handleError(error);
+      }
+      throw error;
+    }
+  }
+
+  async skipOnboarding(): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.patch(`${this.apiUrl}/profile/onboarding`, {})
+      );
+
+      if (this.currentUser) {
+        const updatedUser = { ...this.currentUser, onboardingCompleted: true };
+        this.currentUserSubject.next(updatedUser);
+        this.currentUser = updatedUser;
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      }
+    } catch (error) {
+      if (error instanceof HttpErrorResponse) {
+        throw this.handleError(error);
+      }
+      throw error;
+    }
+  }
+
+  shouldShowOnboarding(): boolean {
+    return this.currentUser ? !this.currentUser.onboardingCompleted : false;
+  }
+
   async logout() {
     this.clearAuthData();
     await this.router.navigate(['/']);
@@ -198,62 +156,35 @@ export class AuthService {
     return localStorage.getItem('token');
   }
 
-  async skipOnboarding(): Promise<void> {
-    if (this.currentUser) {
-      const updatedUser = { ...this.currentUser, onboardingCompleted: true };
-      this.currentUserSubject.next(updatedUser);
-      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-
-      await firstValueFrom(
-        this.http.patch(`${this.apiUrl}/profile/onboarding`, {
-          onboardingCompleted: true,
-        })
-      );
-    }
+  private setToken(token: string): void {
+    localStorage.setItem('token', token);
   }
 
-  async completeOnboarding(profileData: UserProfile): Promise<void> {
-    if (this.currentUser) {
-      const response = await firstValueFrom(
-        this.http.post(`${this.apiUrl}/profile`, profileData)
-      );
-
-      if (response) {
-        const updatedUser = { ...this.currentUser, onboardingCompleted: true };
-        this.currentUserSubject.next(updatedUser);
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-      }
-    }
-  }
-
-  shouldShowOnboarding(): boolean {
-    return this.currentUser ? !this.currentUser.onboardingCompleted : false;
+  private clearAuthData(): void {
+    localStorage.removeItem('token');
+    localStorage.removeItem('currentUser');
+    this.currentUserSubject.next(null);
+    this.currentUser = null;
   }
 
   private loadInitialUser(): User | null {
     const userJson = localStorage.getItem('currentUser');
-    // Ensure "undefined" string isn't parsed
-    if (userJson && userJson !== 'undefined') {
+    if (userJson) {
       try {
-        const user = JSON.parse(userJson);
-        // Add a check to ensure the parsed user is a valid object
-        if (user && typeof user === 'object') {
-          return user;
-        } else {
-          console.error('Invalid user data found in localStorage:', userJson);
-          localStorage.removeItem('currentUser');
-          return null;
-        }
-      } catch (e) {
-        console.error('Error parsing user from localStorage', e);
-        localStorage.removeItem('currentUser');
+        return JSON.parse(userJson);
+      } catch {
         return null;
       }
     }
-    // If userJson is null or "undefined", remove the item
-    if (userJson === 'undefined') {
-      localStorage.removeItem('currentUser');
-    }
     return null;
+  }
+
+  private handleError(error: HttpErrorResponse): Error {
+    if (error.status === 401) {
+      this.clearAuthData();
+      this.router.navigate(['/login']);
+      return new Error('Session expired. Please login again.');
+    }
+    return new Error(error.error?.error || 'An error occurred');
   }
 }

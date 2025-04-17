@@ -10,6 +10,8 @@ declare global {
   namespace Express {
     interface Request {
       user?: JWTPayload;
+      userId?: string;
+      userRole?: UserRole;
     }
   }
 }
@@ -33,9 +35,18 @@ export const authenticate = async (
 
     const decoded = await verifyToken(token);
     req.user = decoded;
+    req.userId = decoded.id;
+    req.userRole = decoded.role;
     next();
   } catch (error) {
-    next(error);
+    if (error instanceof Error) {
+      const appError = error as AppError;
+      appError.statusCode = 401;
+      appError.message = 'Invalid or expired token';
+      next(appError);
+    } else {
+      next(error);
+    }
   }
 };
 

@@ -19,8 +19,26 @@ export class Profile {
   @Column({ nullable: true })
   bio: string;
 
+  @Column({ nullable: true })
+  phone: string;
+
   @Column('simple-array', { nullable: true })
   skills: string[];
+
+  @Column({ nullable: true })
+  experienceLevel: string;
+
+  @Column('simple-array', { nullable: true })
+  jobTypes: string[];
+
+  @Column({ nullable: true })
+  salaryExpectation: string;
+
+  @Column({ nullable: true })
+  preferredLocation: string;
+
+  @Column({ nullable: true })
+  location: string;
 
   @Column('simple-json', { nullable: true })
   experience: {
@@ -30,9 +48,6 @@ export class Profile {
     startDate: string;
     endDate?: string;
   }[];
-
-  @Column({ nullable: true })
-  location: string;
 
   @Column({ nullable: true })
   education: string;
@@ -61,4 +76,22 @@ export class Profile {
 
   @Column({ nullable: true })
   industry: string;
+
+  @Column({ nullable: true })
+  description: string;
+
+  @Column({ nullable: true })
+  workLocations: string;
+
+  @Column({ nullable: true })
+  interviewProcess: string;
+
+  @Column({ nullable: true })
+  benefits: string;
+
+  @Column({ nullable: true })
+  salaryRange: string;
+
+  @Column({ default: false })
+  onboardingCompleted: boolean;
 }

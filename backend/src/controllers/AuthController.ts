@@ -8,7 +8,7 @@ import bcrypt from 'bcrypt';
 export class AuthController {
   static async register(req: Request, res: Response) {
     try {
-      const { name, email, password, role } = req.body;
+      const { firstName, lastName, email, password, role } = req.body;
 
       // Check if user already exists
       const userExists = await AppDataSource.getRepository(User).findOne({
@@ -25,17 +25,20 @@ export class AuthController {
 
       // Create new user
       const user = new User();
-      user.name = name;
+      user.name = `${firstName} ${lastName}`.trim();
       user.email = email;
       user.passwordHash = passwordHash;
       user.role = role;
 
-      const savedUser = await AppDataSource.getRepository(User).save(user);
+      const userRepository = AppDataSource.getRepository(User);
+      const profileRepository = AppDataSource.getRepository(Profile);
+
+      const savedUser = await userRepository.save(user);
 
       // Create a profile for user
       const profile = new Profile();
       profile.user = savedUser;
-      await AppDataSource.getRepository(Profile).save(profile);
+      await profileRepository.save(profile);
 
       // Generate JWT token
       const token = generateToken({
@@ -44,16 +47,17 @@ export class AuthController {
         role: savedUser.role,
       });
 
-      // Remove sensitive data and format response
+      // Format response
       const { passwordHash: _, ...userWithoutPassword } = savedUser;
+      const responseUser = {
+        ...userWithoutPassword,
+        firstName,
+        lastName,
+        onboardingCompleted: false,
+      };
 
       return res.status(201).json({
-        user: {
-          ...userWithoutPassword,
-          firstName: name.split(' ')[0],
-          lastName: name.split(' ')[1] || '',
-          onboardingCompleted: false,
-        },
+        user: responseUser,
         token,
       });
     } catch (error) {

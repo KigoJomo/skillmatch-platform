@@ -1,35 +1,40 @@
-import { Injectable } from '@angular/core';
-import { Router } from '@angular/router';
+import { inject } from '@angular/core';
+import {
+  Router,
+  ActivatedRouteSnapshot,
+  RouterStateSnapshot,
+} from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { UserRole } from '../services/auth.service';
 
-@Injectable({
-  providedIn: 'root',
-})
-export class AuthGuard {
-  constructor(private authService: AuthService, private router: Router) {}
+export const authGuard = (requiredRole?: UserRole) => {
+  return async (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
+    const router = inject(Router);
+    const authService = inject(AuthService);
+    const user = authService.currentUser;
 
-  async canActivate(
-    role?: 'Job Seeker' | 'Employer/Recruiter'
-  ): Promise<boolean> {
-    if (!this.authService.currentUser) {
-      await this.router.navigate(['/login']);
+    if (!user) {
+      await router.navigate(['/login'], {
+        queryParams: { returnUrl: state.url },
+      });
       return false;
     }
 
-    if (role && this.authService.currentUser.role !== role) {
+    if (requiredRole && user.role !== requiredRole) {
       const correctDashboard =
-        this.authService.currentUser.role === 'Job Seeker'
+        user.role === 'Job Seeker'
           ? '/dashboard/seeker'
           : '/dashboard/employer';
-      await this.router.navigate([correctDashboard]);
+      await router.navigate([correctDashboard]);
       return false;
     }
 
-    if (!this.authService.currentUser.onboardingCompleted) {
-      await this.router.navigate(['/onboarding']);
+    // Check onboarding status unless the user is trying to access the onboarding page
+    if (!user.onboardingCompleted && !state.url.includes('/onboarding')) {
+      await router.navigate(['/onboarding']);
       return false;
     }
 
     return true;
-  }
-}
+  };
+};
