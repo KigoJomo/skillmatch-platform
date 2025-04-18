@@ -8,6 +8,7 @@ import { SeekerDashboardComponent } from './pages/dashboard/seeker-dashboard/see
 import { EmployerDashboardComponent } from './pages/dashboard/employer-dashboard/employer-dashboard.component';
 import { ProfileComponent } from './pages/dashboard/profile/profile.component';
 import { authGuard } from './shared/guards/auth.guard';
+import { UserRole } from './core/models/user.model';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -19,7 +20,12 @@ export const routes: Routes = [
     children: [
       {
         path: 'seeker',
-        canActivate: [() => inject(authGuard("Job Seeker"))],
+        canActivate: [
+          authGuard({
+            requiredRole: UserRole.JOB_SEEKER,
+            redirectTo: '/dashboard/seeker'
+          })
+        ],
         children: [
           {
             path: '',
@@ -48,7 +54,10 @@ export const routes: Routes = [
       {
         path: 'employer',
         canActivate: [
-          () => inject(authGuard('Employer/Recruiter')),
+          authGuard({
+            requiredRole: UserRole.EMPLOYER,
+            redirectTo: '/dashboard/employer'
+          }),
         ],
         children: [
           {

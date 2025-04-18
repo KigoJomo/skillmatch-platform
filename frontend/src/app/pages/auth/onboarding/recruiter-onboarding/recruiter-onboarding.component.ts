@@ -390,7 +390,14 @@ export class RecruiterOnboardingComponent {
   }
 
   async skipOnboarding() {
-    await this.navigateToDashboard();
+    this.isSkipping = true
+
+    try {
+      await this.authService.skipOnboarding();
+      await this.navigateToDashboard()
+    } finally {
+      this.isSkipping = false
+    }
   }
 
   private async completeOnboarding() {

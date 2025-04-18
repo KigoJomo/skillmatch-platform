@@ -1,34 +1,47 @@
+import { CanActivateFn, Router } from '@angular/router';
 import { inject } from '@angular/core';
-import {
-  Router,
-  ActivatedRouteSnapshot,
-  RouterStateSnapshot,
-} from '@angular/router';
-import { AuthService } from '../services/auth.service';
-import { UserRole } from '../services/auth.service';
+import { AuthService, UserRole } from '../services/auth.service';
+import { map, take } from 'rxjs/operators';
 
-export const authGuard = (requiredRole?: UserRole) => {
-  return async (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
+export interface AuthGuardConfig {
+  requiredRole?: UserRole;
+  redirectTo?: string;
+}
+
+export const authGuard: (config?: AuthGuardConfig) => CanActivateFn = (
+  config?: AuthGuardConfig
+) => {
+  return () => {
     const router = inject(Router);
     const authService = inject(AuthService);
-    const user = authService.currentUser;
 
-    if (!user) {
-      await router.navigate(['/login'], {
-        queryParams: { returnUrl: state.url },
-      });
-      return false;
-    }
+    return authService.currentUser$.pipe(
+      take(1),
+      map(user => {
+        if (!user) {
+          router.navigate(['/login'], {
+            queryParams: { returnUrl: router.routerState.snapshot.url }
+          });
+          return false;
+        }
 
-    if (requiredRole && user.role !== requiredRole) {
-      const correctDashboard =
-        user.role === 'Job Seeker'
-          ? '/dashboard/seeker'
-          : '/dashboard/employer';
-      await router.navigate([correctDashboard]);
-      return false;
-    }
+        if (config?.requiredRole && user.role !== config.requiredRole) {
+          const redirectPath = config.redirectTo || getDashboardByRole(user.role);
+          router.navigate([redirectPath]);
+          return false;
+        }
 
-    return true;
+        if (!user.onboardingCompleted) {
+          router.navigate(['/onboarding']);
+          return false;
+        }
+
+        return true;
+      })
+    );
   };
+};
+
+const getDashboardByRole = (role: UserRole): string => {
+  return role === 'Job Seeker' ? '/dashboard/seeker' : '/dashboard/employer';
 };
