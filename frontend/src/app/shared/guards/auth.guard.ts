@@ -29,12 +29,6 @@ export const authGuard = (requiredRole?: UserRole) => {
       return false;
     }
 
-    // Check onboarding status unless the user is trying to access the onboarding page
-    if (!user.onboardingCompleted && !state.url.includes('/onboarding')) {
-      await router.navigate(['/onboarding']);
-      return false;
-    }
-
     return true;
   };
 };

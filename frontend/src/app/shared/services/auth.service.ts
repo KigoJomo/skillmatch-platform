@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { firstValueFrom, BehaviorSubject } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { firstValueFrom, BehaviorSubject, Observable } from 'rxjs';
-import { jwtDecode } from 'jwt-decode';
 
 export type UserRole = 'Job Seeker' | 'Employer/Recruiter';
 
@@ -13,6 +12,18 @@ export interface User {
   email: string;
   role: UserRole;
   onboardingCompleted: boolean;
+}
+
+export interface Profile {
+  id: string;
+  user: User;
+  firstName: string;
+  lastName: string;
+  skills: string[];
+  experienceLevel: string;
+  jobTypes: string[];
+  bio: string;
+  location: string;
 }
 
 export interface UserProfile {
@@ -38,7 +49,7 @@ interface JwtPayload {
   providedIn: 'root',
 })
 export class AuthService {
-  private apiUrl = '/api';
+  private apiUrl = environment.apiUrl
   private currentUserSubject = new BehaviorSubject<User | null>(
     this.loadInitialUser()
   );
@@ -106,7 +117,7 @@ export class AuthService {
   async completeOnboarding(profileData: UserProfile): Promise<void> {
     try {
       const response = await firstValueFrom(
-        this.http.post<Profile>(`${this.apiUrl}/profile`, profileData)
+        this.http.post<Profile>(`${this.apiUrl}/profile/onboarding`, profileData)
       );
 
       if (response && this.currentUser) {

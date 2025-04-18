@@ -4,14 +4,8 @@ import { ChatSession } from "./ChatSession";
 import { Application } from "./Application";
 
 export enum UserRole{
-  SEEKER = 'seeker',
-  EMPLOYER = 'employer'
-}
-
-export enum OnboardingStatus {
-  NOT_STARTED = 'not_started',
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
+  SEEKER = 'Job Seeker',
+  EMPLOYER = 'Employer/Recruiter'
 }
 
 @Entity()
@@ -23,13 +17,13 @@ export class User{
   email!: string;
 
   @Column()
-  passwordHash!: string; // Store the hashed version of the password
+  passwordHash!: string;
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.SEEKER })
   role!: UserRole;
 
-  @Column({ type: 'enum', enum: OnboardingStatus, default: OnboardingStatus.NOT_STARTED })
-  onboardingStatus!: OnboardingStatus;
+  @Column({ type: 'boolean', default: false })
+  onboardingCompleted!: boolean;
 
   @CreateDateColumn()
   createdAt!: Date;

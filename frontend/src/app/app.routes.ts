@@ -7,7 +7,7 @@ import { HomeComponent } from './pages/home/home.component';
 import { SeekerDashboardComponent } from './pages/dashboard/seeker-dashboard/seeker-dashboard.component';
 import { EmployerDashboardComponent } from './pages/dashboard/employer-dashboard/employer-dashboard.component';
 import { ProfileComponent } from './pages/dashboard/profile/profile.component';
-import { AuthGuard } from './shared/guards/auth.guard';
+import { authGuard } from './shared/guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -18,13 +18,8 @@ export const routes: Routes = [
     path: 'dashboard',
     children: [
       {
-        path: '',
-        redirectTo: 'seeker',
-        pathMatch: 'full',
-      },
-      {
         path: 'seeker',
-        canActivate: [() => inject(AuthGuard).canActivate('Job Seeker')],
+        canActivate: [() => inject(authGuard("Job Seeker"))],
         children: [
           {
             path: '',
@@ -53,7 +48,7 @@ export const routes: Routes = [
       {
         path: 'employer',
         canActivate: [
-          () => inject(AuthGuard).canActivate('Employer/Recruiter'),
+          () => inject(authGuard('Employer/Recruiter')),
         ],
         children: [
           {
