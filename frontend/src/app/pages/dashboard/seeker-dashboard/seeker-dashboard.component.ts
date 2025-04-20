@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.component';
+import { DashboardService } from '../../../shared/services/dashboard.service';
 
 @Component({
   selector: 'app-seeker-dashboard',
@@ -30,11 +31,11 @@ import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.c
                   class="w-24 h-24 rounded-full object-cover z-10"
                 />
               </div>
-              <h3 class="font-semibold">John Doe</h3>
+              <h3 class="font-semibold">{{profileData.firstName}}</h3>
               <div
                 class="flex items-center gap-4 text-sm text-foreground-light mt-1"
               >
-                <span>job-seeker&#64;gmail.com</span>
+                <span>{{profileData.email}}</span>
               </div>
             </div>
           </div>
@@ -42,7 +43,9 @@ import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.c
             <h4 class="mb-4">Application Status Overview</h4>
             <!-- Application Status Cards -->
             <div class="grid grid-cols-4 gap-4 mb-8">
-              <div class="p-4 rounded-2xl bg-background-light/20 border-2 border-foreground-light/30 text-center">
+              <div
+                class="p-4 rounded-2xl bg-background-light/20 border-2 border-foreground-light/30 text-center"
+              >
                 <div class="flex justify-between items-center mb-1">
                   <h5 class="text-sm text-foreground-light">Applied</h5>
                   <button class="text-foreground-light/60">...</button>
@@ -50,15 +53,21 @@ import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.c
                 <p class="text-2xl !text-accent font-semibold">15</p>
                 <p class="text-xs text-foreground-light">+23%</p>
               </div>
-              <div class="p-4 rounded-2xl bg-background-light/20 border-2 border-foreground-light/30 text-center">
+              <div
+                class="p-4 rounded-2xl bg-background-light/20 border-2 border-foreground-light/30 text-center"
+              >
                 <div class="flex justify-between items-center mb-1">
-                  <h5 class="text-sm text-foreground-light">Interview Scheduled</h5>
+                  <h5 class="text-sm text-foreground-light">
+                    Interview Scheduled
+                  </h5>
                   <button class="text-foreground-light/60">...</button>
                 </div>
                 <p class="text-2xl !text-accent font-semibold">3</p>
                 <p class="text-xs text-foreground-light">+7%</p>
               </div>
-              <div class="p-4 rounded-2xl bg-background-light/20 border-2 border-foreground-light/30 text-center">
+              <div
+                class="p-4 rounded-2xl bg-background-light/20 border-2 border-foreground-light/30 text-center"
+              >
                 <div class="flex justify-between items-center mb-1">
                   <h5 class="text-sm text-foreground-light">Offers</h5>
                   <button class="text-foreground-light/60">...</button>
@@ -66,7 +75,9 @@ import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.c
                 <p class="text-2xl !text-accent font-semibold">1</p>
                 <p class="text-xs text-foreground-light">+0%</p>
               </div>
-              <div class="p-4 rounded-2xl bg-background-light/20 border-2 border-foreground-light/30 text-center">
+              <div
+                class="p-4 rounded-2xl bg-background-light/20 border-2 border-foreground-light/30 text-center"
+              >
                 <div class="flex justify-between items-center mb-1">
                   <h5 class="text-sm text-foreground-light">Rejected</h5>
                   <button class="text-foreground-light/60">...</button>
@@ -132,7 +143,9 @@ import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.c
                 <div class="h-40 flex items-end justify-between">
                   <!-- Bar chart for monthly progress -->
                   <div class="flex-1 flex items-end h-full">
-                    <div class="flex items-end justify-between gap-4 w-full h-5/6">
+                    <div
+                      class="flex items-end justify-between gap-4 w-full h-5/6"
+                    >
                       <div class="w-12 h-[20%] bg-[#4ade80] rounded-t"></div>
                       <div class="w-12 h-[30%] bg-[#4ade80] rounded-t"></div>
                       <div class="w-12 h-[45%] bg-[#4ade80] rounded-t"></div>
@@ -169,4 +182,37 @@ import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.c
     `,
   ],
 })
-export class SeekerDashboardComponent {}
+export class SeekerDashboardComponent implements OnInit {
+  profileData: any;
+  dashboardData: any;
+
+  constructor(private dashboardService: DashboardService) {}
+
+  ngOnInit(): void {
+    this.loadDashboardData();
+    this.loadProfileData();
+  }
+
+  private loadDashboardData() {
+    // TODO: Mak this dynamic => role-based
+    this.dashboardService.getJobSeekerDashData().subscribe({
+      next: (data) => {
+        this.dashboardData = data;
+      },
+      error: (error) => {
+        console.error('Error loading dashboard data: ', error);
+      },
+    });
+  }
+
+  private loadProfileData() {
+    this.dashboardService.getProfileData().subscribe({
+      next: (data) => {
+        this.profileData = data;
+      },
+      error: (error) => {
+        console.error('Error loading Profile data: ', error);
+      },
+    });
+  }
+}

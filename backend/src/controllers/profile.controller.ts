@@ -66,10 +66,15 @@ export class ProfileController {
         return;
       }
 
-      await profileRepository.save({
-        ...user?.profile,
-        ...req.body,
-      });
+      if (!user.profile) {
+        const newProfile = profileRepository.create({
+          user: user,
+          ...req.body,
+        });
+        await profileRepository.save(newProfile);
+      } else {
+        user.profile = { ...user.profile, ...req.body }
+      }
 
       user.onboardingCompleted = true;
       await userRepository.save(user);
@@ -98,7 +103,7 @@ export class ProfileController {
       await userRepository.save(user);
 
       res.json({ message: 'Onboarding skipped' });
-      return
+      return;
     } catch (error) {
       console.error('Skip onboarding error:', error);
       res.status(500).json({ error: 'Failed to skip onboarding' });

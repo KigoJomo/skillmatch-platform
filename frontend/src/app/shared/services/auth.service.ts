@@ -19,14 +19,24 @@ export interface Profile {
   user: User;
   firstName: string;
   lastName: string;
-  skills: string[];
-  experienceLevel: string;
-  jobTypes: string[];
-  bio: string;
-  location: string;
+  skills?: string[];
+  experienceLevel?: string;
+  jobTypes?: string[];
+  bio?: string;
+  location?: string;
+  description?: string
+  website?: string
+  interviewProcess?: string;
+  benefits?: string;
+  workLocations?: string
+  companySize?: string;
+  industry?: string;
+  salaryRange?: string
 }
 
 export interface UserProfile {
+  firstName?: string;
+  lastName?: string;
   phone?: string;
   location?: string;
   bio?: string;

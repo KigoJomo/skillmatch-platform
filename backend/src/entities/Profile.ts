@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  JoinColumn,
+} from 'typeorm';
 import { User } from './User';
 
 @Entity()
@@ -16,18 +22,51 @@ export class Profile {
   @Column({ nullable: true })
   lastName!: string;
 
-  @Column('text', { array: true, nullable: true })
-  skills!: string[]; // List of user skills (e.g., ['JavaScript', 'React'])
+  @Column({ nullable: true })
+  phone!: string;
 
   @Column({ nullable: true })
-  experienceLevel!: string; // Example: 'Junior', 'Mid', 'Senior'
+  description!: string;
+
+  @Column({ nullable: true })
+  website!: string;
 
   @Column('text', { array: true, nullable: true })
-  jobTypes!: string[]; // Example: ['Full-time', 'Part-time', 'Freelance']
+  skills!: string[];
+
+  @Column({ nullable: true })
+  experienceLevel!: string;
+
+  @Column('text', { array: true, nullable: true })
+  jobTypes!: string[];
 
   @Column({ nullable: true })
   bio!: string;
 
   @Column({ nullable: true })
   location!: string;
+
+  @Column({ nullable: true })
+  salaryExpectation!: string;
+
+  @Column({ nullable: true })
+  preferredLocation!: string;
+
+  @Column({ nullable: true })
+  companySize!: string;
+
+  @Column({ nullable: true })
+  industry!: string;
+
+  @Column({ nullable: true })
+  interviewProcess!: string;
+
+  @Column({ nullable: true })
+  benefits!: string;
+
+  @Column({ nullable: true })
+  workLocations!: string;
+
+  @Column({ nullable: true })
+  salaryRange!: string;
 }
