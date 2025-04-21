@@ -1,7 +1,9 @@
+export type UserRole = 'Job Seeker' | 'Employer/Recruiter';
+
 export interface User {
   id: string;
   email: string;
-  role: 'Job Seeker' | 'Employer/Recruiter';
+  role: UserRole;
   onboardingCompleted: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -9,24 +11,26 @@ export interface User {
 
 export interface Profile {
   id: string;
+  user: User;
   firstName?: string;
   lastName?: string;
   phone?: string;
-  description?: string;
-  website?: string;
   skills?: string[];
   experienceLevel?: string;
   jobTypes?: string[];
   bio?: string;
   location?: string;
-  salaryExpectation?: string;
-  preferredLocation?: string;
-  companySize?: string;
-  industry?: string;
+  description?: string;
+  website?: string;
   interviewProcess?: string;
   benefits?: string;
   workLocations?: string;
+  companySize?: string;
+  industry?: string;
   salaryRange?: string;
+  salaryExpectation?: string;
+  preferredLocation?: string;
+  projects?: Project[];
 }
 
 export interface Job {
@@ -41,9 +45,9 @@ export interface Job {
   updatedAt: Date;
 }
 
-export interface JobListing extends Job{
-  matchPercentage: number
-  company: string
+export interface JobListing extends Job {
+  matchPercentage: number;
+  company: string;
 }
 
 export interface JobApplication {
@@ -60,4 +64,13 @@ export interface DashboardData {
   applicationCount: number;
   rejectedCount: number;
   recentActivity: JobApplication[];
+}
+
+export interface Project {
+  id?: string;
+  name: string;
+  description: string;
+  url?: string;
+  createdAt: string;
+  updatedAt: string;
 }

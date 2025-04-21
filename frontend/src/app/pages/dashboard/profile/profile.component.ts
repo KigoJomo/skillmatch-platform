@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import {
@@ -12,6 +12,11 @@ import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.c
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { InputComponent } from '../../../shared/ui/input/input.component';
 import { AuthService } from '../../../shared/services/auth.service';
+import { DashboardService } from '../../../shared/services/dashboard.service';
+import {
+  Profile,
+  Project,
+} from '../../../shared/interfaces/dashboard.interface';
 
 @Component({
   selector: 'app-profile',
@@ -59,8 +64,10 @@ import { AuthService } from '../../../shared/services/auth.service';
                 </button>
               </div>
               <div>
-                <h1 class="text-2xl font-medium">John Doe</h1>
-                <p class="text-foreground-light">Senior Frontend Developer</p>
+                <h1 class="text-2xl font-medium">
+                  {{ this.authService.currentUser?.firstName }}
+                  {{ this.authService.currentUser?.lastName }}
+                </h1>
               </div>
             </div>
             <app-button variant="secondary" (click)="toggleEdit()">{{
@@ -87,13 +94,6 @@ import { AuthService } from '../../../shared/services/auth.service';
                 [readonly]="!isEditing"
               ></app-input>
               <app-input
-                label="Email"
-                type="email"
-                formControlName="email"
-                [error]="getErrorMessage('email')"
-                [readonly]="!isEditing"
-              ></app-input>
-              <app-input
                 label="Phone"
                 type="tel"
                 formControlName="phone"
@@ -108,8 +108,8 @@ import { AuthService } from '../../../shared/services/auth.service';
               ></app-input>
               <app-input
                 label="Experience Level"
-                formControlName="experience"
-                [error]="getErrorMessage('experience')"
+                formControlName="experienceLevel"
+                [error]="getErrorMessage('experienceLevel')"
                 [readonly]="!isEditing"
               ></app-input>
             </div>
@@ -176,18 +176,16 @@ import { AuthService } from '../../../shared/services/auth.service';
               <div
                 class="group flex items-center gap-2 px-3 py-1 rounded-full bg-background-light/30 border border-foreground-light/30"
               >
-                <span>{{ skill.name }}</span>
+                <span class="">{{ skill.name }}</span>
+
                 <div class="flex items-center gap-1">
-                  <span class="text-xs text-foreground-light">{{
-                    skill.level
-                  }}</span>
                   @if (isEditingSkills) {
                   <button
                     type="button"
                     (click)="removeSkill(skill)"
-                    class="text-foreground-light hover:text-foreground"
+                    class="text-foreground-light font-pop text-[0.65rem] hover:text-foreground"
                   >
-                    ×
+                    X
                   </button>
                   }
                 </div>
@@ -328,7 +326,7 @@ import { AuthService } from '../../../shared/services/auth.service';
     </app-dashboard-layout>
   `,
 })
-export class ProfileComponent {
+export class ProfileComponent implements OnInit {
   profileImageUrl: string | null = null;
   isEditing = false;
   isEditingSkills = false;
@@ -337,26 +335,9 @@ export class ProfileComponent {
   isEditingCompany = false;
 
   skillInput = new FormControl('');
-  skills: { name: string; level: string }[] = [
-    { name: 'React', level: 'Advanced' },
-    { name: 'TypeScript', level: 'Intermediate' },
-    { name: 'Node.js', level: 'Intermediate' },
-  ];
-
-  projects: { name: string; description: string; url?: string }[] = [
-    {
-      name: 'E-commerce Platform',
-      description:
-        'A full-stack e-commerce platform built with React and Node.js',
-      url: 'https://example.com/project',
-    },
-    {
-      name: 'Task Management App',
-      description:
-        'A collaborative task management application with real-time updates',
-      url: 'https://example.com/project2',
-    },
-  ];
+  skills: { name: string }[] = [];
+  projects: Project[] = [];
+  profile: Profile | null = null;
 
   profileForm: FormGroup;
   projectForm: FormGroup;
@@ -365,19 +346,16 @@ export class ProfileComponent {
   constructor(
     private fb: FormBuilder,
     public authService: AuthService,
-    private router: Router
+    private router: Router,
+    private dashboardService: DashboardService
   ) {
     this.profileForm = this.fb.group({
-      firstName: ['John', [Validators.required]],
-      lastName: ['Doe', [Validators.required]],
-      email: ['john.doe@example.com', [Validators.required, Validators.email]],
-      phone: ['+1234567890', [Validators.required]],
-      location: ['San Francisco, CA', [Validators.required]],
-      experience: ['Senior Level (5-8 years)', [Validators.required]],
-      bio: [
-        'Experienced frontend developer passionate about creating intuitive user interfaces.',
-        [Validators.required],
-      ],
+      firstName: ['', [Validators.required]],
+      lastName: ['', [Validators.required]],
+      phone: ['', [Validators.required]],
+      location: ['', [Validators.required]],
+      experienceLevel: ['', [Validators.required]],
+      bio: ['', [Validators.required]],
     });
 
     this.projectForm = this.fb.group({
@@ -395,17 +373,61 @@ export class ProfileComponent {
     });
   }
 
+  ngOnInit() {
+    this.loadProfileData();
+    this.loadProjects();
+  }
+
+  private loadProfileData() {
+    this.dashboardService.getProfileData().subscribe({
+      next: (profile) => {
+        this.profile = profile;
+        if (profile) {
+          this.profileForm.patchValue({
+            firstName: profile.firstName,
+            lastName: profile.lastName,
+            phone: profile.phone,
+            location: profile.location,
+            experienceLevel: profile.experienceLevel,
+            bio: profile.bio,
+          });
+
+          if (profile.skills) {
+            this.skills = profile.skills.map((skill: any) => ({
+              name: skill,
+            }));
+          }
+        }
+      },
+      error: (error) => {
+        console.error('Error loading profile data:', error);
+      },
+    });
+  }
+
+  private loadProjects() {
+    if (this.authService.currentUser?.role === 'Job Seeker') {
+      this.dashboardService.getUserProjects().subscribe({
+        next: (projects) => {
+          this.projects = projects;
+        },
+        error: (error) => {
+          console.error('Error loading projects:', error);
+        },
+      });
+    }
+  }
+
   toggleEdit() {
     this.isEditing = !this.isEditing;
-    if (!this.isEditing) {
-      this.profileForm.reset({
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@example.com',
-        phone: '+1234567890',
-        location: 'San Francisco, CA',
-        experience: 'Senior Level (5-8 years)',
-        bio: 'Experienced frontend developer passionate about creating intuitive user interfaces.',
+    if (!this.isEditing && this.profile) {
+      this.profileForm.patchValue({
+        firstName: this.profile.firstName,
+        lastName: this.profile.lastName,
+        phone: this.profile.phone,
+        location: this.profile.location,
+        experienceLevel: this.profile.experienceLevel,
+        bio: this.profile.bio,
       });
     }
   }
@@ -413,6 +435,32 @@ export class ProfileComponent {
   toggleSkillEdit() {
     this.isEditingSkills = !this.isEditingSkills;
     this.skillInput.reset();
+
+    // If we're exiting edit mode, save the changes
+    if (!this.isEditingSkills) {
+      this.saveSkills();
+    }
+  }
+
+  private async saveSkills() {
+    try {
+      const updatedProfile = await this.dashboardService
+        .updateProfile({
+          ...this.profile,
+          skills: this.skills.map((s) => s.name),
+        })
+        .toPromise();
+
+      if (updatedProfile) {
+        this.profile = updatedProfile;
+        alert('Skills updated successfully!');
+      }
+    } catch (error) {
+      console.error('Error updating skills:', error);
+      alert('Failed to update skills. Please try again.');
+      // Reload original skills on error
+      this.loadProfileData();
+    }
   }
 
   toggleProjectEdit() {
@@ -474,24 +522,34 @@ export class ProfileComponent {
   addSkill() {
     const skill = this.skillInput.value?.trim();
     if (skill && !this.skills.find((s) => s.name === skill)) {
-      this.skills.push({ name: skill, level: 'Beginner' });
+      this.skills.push({ name: skill });
       this.skillInput.reset();
     }
   }
 
-  removeSkill(skill: { name: string; level: string }) {
+  removeSkill(skill: { name: string }) {
     this.skills = this.skills.filter((s) => s.name !== skill.name);
   }
 
   addProject() {
     if (this.projectForm.valid) {
-      this.projects.push(this.projectForm.value);
+      const newProject: Project = {
+        ...this.projectForm.value,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Optimistically add to UI
+      this.projects.push(newProject);
       this.projectForm.reset();
+
+      // TODO: Add API call to save project when backend is ready
     }
   }
 
-  removeProject(project: { name: string; description: string; url?: string }) {
-    this.projects = this.projects.filter((p) => p.name !== project.name);
+  removeProject(project: Project) {
+    this.projects = this.projects.filter((p) => p.id !== project.id);
+    // TODO: Add API call to delete project when backend is ready
   }
 
   async onSubmit() {
@@ -507,40 +565,28 @@ export class ProfileComponent {
 
     this.isSaving = true;
     try {
-      // Simulate API call with validation
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          // Add some basic validation
-          const email = this.profileForm.get('email')?.value;
-          const phone = this.profileForm.get('phone')?.value;
-
-          if (!email?.includes('@')) {
-            reject(new Error('Invalid email format'));
-            return;
-          }
-
-          if (!phone?.match(/^\+?[\d\s-]+$/)) {
-            reject(new Error('Invalid phone number format'));
-            return;
-          }
-
-          resolve(true);
-        }, 1000);
-      });
-
-      // Update form values and close edit mode
       const formValues = this.profileForm.value;
-      Object.keys(formValues).forEach((key) => {
-        const control = this.profileForm.get(key);
-        if (control) {
-          control.setValue(formValues[key], { emitEvent: false });
-        }
-      });
+      const updatedProfile = await this.dashboardService
+        .updateProfile({
+          firstName: formValues.firstName,
+          lastName: formValues.lastName,
+          phone: formValues.phone,
+          location: formValues.location,
+          experienceLevel: formValues.experienceLevel,
+          bio: formValues.bio,
+          skills: this.skills.map((s) => s.name),
+        })
+        .toPromise();
+
+      if (updatedProfile) {
+        this.profile = updatedProfile;
+        this.toggleEdit();
+      }
 
       // Show success message
       alert('Profile updated successfully!');
-      this.toggleEdit();
     } catch (error) {
+      console.error('Error updating profile:', error);
       alert(
         error instanceof Error
           ? error.message

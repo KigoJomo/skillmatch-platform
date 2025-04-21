@@ -10,5 +10,6 @@ router.get('/', ProfileController.getProfile);
 router.patch('/', ProfileController.updateProfile);
 router.post('/onboarding', ProfileController.completeOnboarding);
 router.patch('/onboarding', ProfileController.skipOnboarding);
+router.get('/projects', ProfileController.getUserProjects);
 
 export { router as ProfileRoutes };

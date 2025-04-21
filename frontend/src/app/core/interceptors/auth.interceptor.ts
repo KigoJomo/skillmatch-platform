@@ -25,12 +25,24 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         if (error.status === 401) {
           // Token expired or invalid
           authService.logout();
-          router.navigate(['/login']);
+          router.navigate(['/login'], {
+            queryParams: { returnUrl: router.routerState.snapshot.url },
+          });
         }
         return throwError(() => error);
       })
     );
   }
 
-  return next(req);
+  // If no token, still allow the request to proceed but without auth header
+  return next(req).pipe(
+    catchError((error: HttpErrorResponse) => {
+      if (error.status === 401) {
+        router.navigate(['/login'], {
+          queryParams: { returnUrl: router.routerState.snapshot.url },
+        });
+      }
+      return throwError(() => error);
+    })
+  );
 };

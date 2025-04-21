@@ -3,6 +3,7 @@ import { AppDataSource } from '../data-source';
 import { User, UserRole } from '../entities/User';
 import { compare, hash } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
+import { AuthRequest } from '../middleware/auth.middleware';
 
 const userRepository = AppDataSource.getRepository(User);
 
@@ -15,7 +16,7 @@ export class AuthController {
 
       if (existingUser) {
         res.status(400).json({ error: 'Email already registered' });
-        return
+        return;
       }
 
       const passwordHash = await hash(password, 10);
@@ -23,7 +24,8 @@ export class AuthController {
       const user = userRepository.create({
         email,
         passwordHash,
-        role: role === 'Employer/Recruiter' ? UserRole.EMPLOYER : UserRole.SEEKER,
+        role:
+          role === 'Employer/Recruiter' ? UserRole.EMPLOYER : UserRole.SEEKER,
         profile: {
           firstName,
           lastName,
@@ -51,7 +53,7 @@ export class AuthController {
     } catch (error) {
       console.error('Registration error:', error);
       res.status(500).json({ error: 'Registration failed' });
-      return
+      return;
     }
   }
 
@@ -66,14 +68,14 @@ export class AuthController {
 
       if (!user) {
         res.status(401).json({ error: 'Invalid Credentials' });
-        return
+        return;
       }
 
       const isValidPassword = await compare(password, user?.passwordHash!);
 
       if (!isValidPassword) {
         res.status(401).json({ error: 'Invaid Credentials' });
-        return
+        return;
       }
 
       const token = sign(
@@ -95,7 +97,35 @@ export class AuthController {
     } catch (error) {
       console.error('Login error:', error);
       res.status(500).json({ error: 'Login failed' });
-      return
+      return;
+    }
+  }
+
+  static async getCurrentUser(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user?.id;
+
+      const user = await userRepository.findOne({
+        where: { id: userId },
+        relations: ['profile'],
+      });
+
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      res.json({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        firstName: user.profile.firstName,
+        lastName: user.profile.lastName,
+      });
+    } catch (error) {
+      console.error('Get current user error:', error);
+      res.status(500).json({ error: 'Failed to get current user' });
+      return;
     }
   }
 }

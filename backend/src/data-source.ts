@@ -9,6 +9,7 @@ import 'dotenv/config';
 import { Job } from './entities/Job';
 import { JobApplication } from './entities/JobApplication';
 import { JobMatch } from './entities/JobMatch';
+import { Project } from './entities/Project';
 
 const database_url = process.env.DATABASE_URL!;
 
@@ -24,6 +25,7 @@ export const AppDataSource = new DataSource({
     JobApplication,
     JobMatch,
     Profile,
+    Project,
     User,
   ],
   migrations: ['src/migrations/*.ts'],

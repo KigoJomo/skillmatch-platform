@@ -2,6 +2,7 @@ import { Column, CreateDateColumn, Entity, OneToMany, OneToOne, PrimaryGenerated
 import { Profile } from "./Profile";
 import { ChatSession } from "./ChatSession";
 import { JobApplication } from './JobApplication';
+import { Project } from "./Project";
 
 export enum UserRole{
   SEEKER = 'Job Seeker',
@@ -39,4 +40,7 @@ export class User{
 
   @OneToMany(() => JobApplication, (application) => application.applicant)
   applications!: JobApplication[];
+
+  @OneToMany(() => Project, (project) => project.user)
+  projects!: Project[]
 }

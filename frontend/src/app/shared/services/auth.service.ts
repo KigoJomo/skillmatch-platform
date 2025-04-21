@@ -1,77 +1,53 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, BehaviorSubject } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { Profile, User, UserRole } from '../interfaces/dashboard.interface';
 
-export type UserRole = 'Job Seeker' | 'Employer/Recruiter';
-
-export interface User {
+interface CurrentUser extends User {
   firstName: string;
   lastName: string;
-  email: string;
-  role: UserRole;
-  onboardingCompleted: boolean;
-}
-
-export interface Profile {
-  id: string;
-  user: User;
-  firstName: string;
-  lastName: string;
-  skills?: string[];
-  experienceLevel?: string;
-  jobTypes?: string[];
-  bio?: string;
-  location?: string;
-  description?: string
-  website?: string
-  interviewProcess?: string;
-  benefits?: string;
-  workLocations?: string
-  companySize?: string;
-  industry?: string;
-  salaryRange?: string
-}
-
-export interface UserProfile {
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  location?: string;
-  bio?: string;
-  skills?: string[];
-  experienceLevel?: string;
-  jobTypes?: string[];
-  salaryExpectation?: string;
-  preferredLocation?: string;
-}
-
-interface JwtPayload {
-  exp: number;
-  iat: number;
-  id: string;
-  email: string;
-  role: UserRole;
 }
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  private apiUrl = environment.apiUrl
-  private currentUserSubject = new BehaviorSubject<User | null>(
-    this.loadInitialUser()
-  );
-  currentUser$ = this.currentUserSubject.asObservable();
-  currentUser: User | null = this.loadInitialUser();
+  private apiUrl = environment.apiUrl;
+  private http = inject(HttpClient);
+  private router = inject(Router);
 
-  constructor(private http: HttpClient, private router: Router) {}
+  private currentUserSubject = new BehaviorSubject<CurrentUser | null>(null);
+  currentUser$ = this.currentUserSubject.asObservable();
+  currentUser: CurrentUser | null = null;
+
+  constructor() {
+    const initialUser = this.loadInitialUser();
+    if (initialUser) {
+      this.currentUser = initialUser;
+      this.currentUserSubject.next(initialUser);
+    }
+
+    // Delay the refresh to avoid circular dependency during initialization
+    setTimeout(() => {
+      if (this.hasValidToken()) {
+        this.refreshCurrentUser().catch((error) => {
+          console.error('Failed to refresh user data:', error);
+          if (error instanceof HttpErrorResponse && error.status === 401) {
+            this.clearAuthData();
+          }
+        });
+      } else if (this.getRawToken()) {
+        this.clearAuthData();
+      }
+    }, 0);
+  }
 
   async login(email: string, password: string): Promise<User> {
     try {
       const response = await firstValueFrom(
-        this.http.post<{ user: User; token: string }>(
+        this.http.post<{ user: CurrentUser; token: string }>(
           `${this.apiUrl}/auth/login`,
           { email, password }
         )
@@ -102,7 +78,7 @@ export class AuthService {
   ): Promise<User> {
     try {
       const response = await firstValueFrom(
-        this.http.post<{ user: User; token: string }>(
+        this.http.post<{ user: CurrentUser; token: string }>(
           `${this.apiUrl}/auth/register`,
           { firstName, lastName, email, password, role }
         )
@@ -124,10 +100,13 @@ export class AuthService {
     }
   }
 
-  async completeOnboarding(profileData: UserProfile): Promise<void> {
+  async completeOnboarding(profileData: Profile): Promise<void> {
     try {
       const response = await firstValueFrom(
-        this.http.post<Profile>(`${this.apiUrl}/profile/onboarding`, profileData)
+        this.http.post<Profile>(
+          `${this.apiUrl}/profile/onboarding`,
+          profileData
+        )
       );
 
       if (response && this.currentUser) {
@@ -173,23 +152,57 @@ export class AuthService {
     await this.router.navigate(['/']);
   }
 
-  getToken(): string | null {
+  private getRawToken(): string | null {
     return localStorage.getItem('token');
   }
 
+  getToken(): string | null {
+    if (!this.hasValidToken()) {
+      this.clearAuthData();
+      return null;
+    }
+    return this.getRawToken();
+  }
+
+  private hasValidToken(): boolean {
+    const token = this.getRawToken();
+    if (!token) return false;
+
+    const expiration = localStorage.getItem('token_expiration');
+    if (!expiration) return false;
+
+    return Date.now() < parseInt(expiration) * 1000;
+  }
+
   private setToken(token: string): void {
+    const tokenData = this.parseJwt(token);
+    if (tokenData && tokenData.exp) {
+      localStorage.setItem('token_expiration', tokenData.exp.toString());
+    }
     localStorage.setItem('token', token);
+  }
+
+  private parseJwt(token: string) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      return JSON.parse(window.atob(base64));
+    } catch {
+      return null;
+    }
   }
 
   private clearAuthData(): void {
     localStorage.removeItem('token');
+    localStorage.removeItem('token_expiration');
     localStorage.removeItem('currentUser');
     this.currentUserSubject.next(null);
     this.currentUser = null;
   }
 
-  private loadInitialUser(): User | null {
+  private loadInitialUser(): CurrentUser | null {
     const userJson = localStorage.getItem('currentUser');
+
     if (userJson) {
       try {
         return JSON.parse(userJson);
@@ -198,6 +211,34 @@ export class AuthService {
       }
     }
     return null;
+  }
+
+  async updateCurrentUser(userData: Partial<CurrentUser>): Promise<void> {
+    if (this.currentUser) {
+      const updatedUser = { ...this.currentUser, ...userData };
+      this.currentUserSubject.next(updatedUser);
+      this.currentUser = updatedUser;
+      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+    }
+  }
+
+  async refreshCurrentUser(): Promise<void> {
+    try {
+      const response = await firstValueFrom(
+        this.http.get<CurrentUser>(`${this.apiUrl}/auth/me`)
+      );
+
+      if (response) {
+        this.currentUserSubject.next(response);
+        this.currentUser = response;
+        localStorage.setItem('currentUser', JSON.stringify(response));
+      }
+    } catch (error) {
+      if (error instanceof HttpErrorResponse) {
+        throw this.handleError(error);
+      }
+      throw error;
+    }
   }
 
   private handleError(error: HttpErrorResponse): Error {

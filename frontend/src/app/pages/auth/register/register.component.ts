@@ -13,7 +13,8 @@ import {
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { InputComponent } from '../../../shared/ui/input/input.component';
 import { LogoComponent } from '../../../shared/ui/logo/logo.component';
-import { AuthService, UserRole } from '../../../shared/services/auth.service';
+import { AuthService } from '../../../shared/services/auth.service';
+import { UserRole } from '../../../shared/interfaces/dashboard.interface';
 
 @Component({
   selector: 'app-register',
