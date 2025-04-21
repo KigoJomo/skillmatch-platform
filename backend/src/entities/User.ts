@@ -1,7 +1,7 @@
 import { Column, CreateDateColumn, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Profile } from "./Profile";
 import { ChatSession } from "./ChatSession";
-import { Application } from "./Application";
+import { JobApplication } from './JobApplication';
 
 export enum UserRole{
   SEEKER = 'Job Seeker',
@@ -37,6 +37,6 @@ export class User{
   @OneToMany(() => ChatSession, (chatSession) => chatSession.user)
   chatSessions!: ChatSession[];
 
-  @OneToMany(() => Application, (application) => application.user)
-  applications!: Application[];
+  @OneToMany(() => JobApplication, (application) => application.applicant)
+  applications!: JobApplication[];
 }

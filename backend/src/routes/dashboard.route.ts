@@ -9,6 +9,7 @@ router.use(authMiddleware);
 
 seekerRouter.get('/', DashbboardController.getJobSeekerDashboard);
 seekerRouter.get('/jobs', DashbboardController.getAvailableJobs);
+seekerRouter.get('/applications', DashbboardController.getSeekerApplications);
 
 router.use('/seeker', seekerRouter);
 

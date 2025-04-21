@@ -5,7 +5,6 @@ import { User } from './entities/User';
 import { Profile } from './entities/Profile';
 import { ChatSession } from './entities/ChatSession';
 import { AuthSession } from './entities/AuthSession';
-import { Application } from './entities/Application';
 import 'dotenv/config';
 import { Job } from './entities/Job';
 import { JobApplication } from './entities/JobApplication';
@@ -19,7 +18,6 @@ export const AppDataSource = new DataSource({
   synchronize: false,
   logging: false,
   entities: [
-    Application,
     AuthSession,
     ChatSession,
     Job,

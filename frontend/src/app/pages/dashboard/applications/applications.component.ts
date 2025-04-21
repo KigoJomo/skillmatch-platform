@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DashboardService } from '../../../shared/services/dashboard.service';
 
 @Component({
   selector: 'app-applications',
@@ -25,7 +26,6 @@ import { CommonModule } from '@angular/common';
                 <span>{{ application.company }}</span>
                 <span>•</span>
                 <span>{{ application.location }}</span>
-                <span>•</span>
                 <span>Applied {{ application.appliedDate }}</span>
               </div>
             </div>
@@ -65,42 +65,38 @@ import { CommonModule } from '@angular/common';
     </div>
   `,
 })
-export class ApplicationsComponent {
-  applications = [
-    {
-      id: 1,
-      jobTitle: 'Senior Frontend Developer',
-      company: 'TechCorp',
-      location: 'Remote',
-      appliedDate: '2 days ago',
-      status: 'In Review',
-      statusClass: 'bg-blue-500/20 text-blue-500',
-      nextSteps: 'Technical interview scheduled',
-      interviewDate: 'April 15, 2025 at 2:00 PM',
-      hasMessage: true,
-    },
-    {
-      id: 2,
-      jobTitle: 'Full Stack Engineer',
-      company: 'InnovateSoft',
-      location: 'New York, NY',
-      appliedDate: '5 days ago',
-      status: 'Pending',
-      statusClass: 'bg-yellow-500/20 text-yellow-500',
-      nextSteps: 'Application under initial review',
-      hasMessage: false,
-    },
-    {
-      id: 3,
-      jobTitle: 'UI/UX Developer',
-      company: 'DesignHub',
-      location: 'Remote',
-      appliedDate: '1 week ago',
-      status: 'Interviewed',
-      statusClass: 'bg-purple-500/20 text-purple-500',
-      nextSteps: 'Waiting for final decision',
-      interviewDate: 'April 8, 2025 at 11:00 AM',
-      hasMessage: true,
-    },
-  ];
+export class ApplicationsComponent implements OnInit {
+  applications: any[] = [];
+
+  constructor(private dashboardService: DashboardService) {}
+
+  ngOnInit() {
+    this.loadApplications();
+  }
+
+  private loadApplications() {
+    this.dashboardService.getSeekerApplications().subscribe({
+      next: (data) => {
+        this.applications = data.map((app: any) => ({
+          ...app,
+          appliedDate: this.formatDate(app.appliedDate),
+        }));
+      },
+      error: (error) => {
+        console.error('Error loading applications:', error);
+      },
+    });
+  }
+
+  private formatDate(date: string): string {
+    const d = new Date(date);
+    const now = new Date();
+    const diff = now.getTime() - d.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days} days ago`;
+    return d.toLocaleDateString();
+  }
 }
