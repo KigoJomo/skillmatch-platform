@@ -114,9 +114,10 @@ interface OnboardingStep {
 
                 <app-input
                   label="Company Description"
-                  type="text"
+                  type="textarea"
                   formControlName="description"
                   [error]="getErrorMessage('description')"
+                  placeholder="Tell us about your company, its mission, and what makes it unique"
                 ></app-input>
 
                 <div class="grid grid-cols-2 gap-4">
@@ -147,7 +148,7 @@ interface OnboardingStep {
                 <div class="border border-foreground-light/30 rounded-lg p-4">
                   <div class="flex items-center gap-2 mb-4">
                     <app-input
-                      placeholder="Add required skills (e.g. JavaScript)"
+                      placeholder="Add commonly required skills (e.g. JavaScript)"
                       [formControl]="skillInput"
                       (keyup.enter)="addSkill()"
                     ></app-input>
@@ -180,7 +181,7 @@ interface OnboardingStep {
 
                 <div>
                   <label class="block text-sm font-medium mb-2"
-                    >Job Types You're Hiring For</label
+                    >Employment Types Offered</label
                   >
                   <div class="space-y-2">
                     @for (type of jobTypes; track type) {
@@ -203,7 +204,7 @@ interface OnboardingStep {
 
                 <div class="space-y-2">
                   <label class="text-sm font-medium"
-                    >Experience Level Requirements</label
+                    >Desired Experience Levels</label
                   >
                   @for (level of experienceLevels; track level) {
                   <div
@@ -230,7 +231,7 @@ interface OnboardingStep {
               @if (currentStep === 3) {
               <div class="flex flex-col gap-6 animate-fade-in-up">
                 <app-input
-                  label="Salary Range Offered"
+                  label="Typical Salary Range"
                   type="text"
                   formControlName="salaryRange"
                   [error]="getErrorMessage('salaryRange')"
@@ -238,23 +239,26 @@ interface OnboardingStep {
 
                 <app-input
                   label="Work Location Options"
-                  type="text"
+                  type="textarea"
                   formControlName="workLocations"
                   [error]="getErrorMessage('workLocations')"
+                  placeholder="e.g. Office in San Francisco, Remote within US, Hybrid 3 days/week"
                 ></app-input>
 
                 <app-input
-                  label="Interview Process Description"
-                  type="text"
+                  label="Interview Process"
+                  type="textarea"
                   formControlName="interviewProcess"
                   [error]="getErrorMessage('interviewProcess')"
+                  placeholder="Describe your typical interview process and timeline"
                 ></app-input>
 
                 <app-input
-                  label="Benefits and Perks"
-                  type="text"
+                  label="Benefits Package"
+                  type="textarea"
                   formControlName="benefits"
                   [error]="getErrorMessage('benefits')"
+                  placeholder="List the key benefits and perks offered to employees"
                 ></app-input>
               </div>
               }
@@ -318,17 +322,17 @@ export class RecruiterOnboardingComponent {
     {
       id: 1,
       title: 'Company Profile',
-      description: 'Tell us about your company',
+      description: 'Tell us about your organization',
     },
     {
       id: 2,
-      title: 'Hiring Needs',
-      description: 'What kind of talent are you looking for?',
+      title: 'Hiring Requirements',
+      description: 'What kind of talent do you typically look for?',
     },
     {
       id: 3,
-      title: 'Recruitment Preferences',
-      description: 'Set your recruitment preferences',
+      title: 'Employment Details',
+      description: 'Share information about working at your company',
     },
   ];
 
@@ -390,13 +394,12 @@ export class RecruiterOnboardingComponent {
   }
 
   async skipOnboarding() {
-    this.isSkipping = true
-
+    this.isSkipping = true;
     try {
       await this.authService.skipOnboarding();
-      await this.navigateToDashboard()
+      await this.navigateToDashboard();
     } finally {
-      this.isSkipping = false
+      this.isSkipping = false;
     }
   }
 
@@ -418,14 +421,11 @@ export class RecruiterOnboardingComponent {
   }
 
   private async navigateToDashboard() {
-    const role =
-      this.authService.currentUser?.role === 'Job Seeker'
-        ? 'seeker'
-        : 'employer';
-    await this.router.navigate([`/dashboard/${role}`]);
+    await this.router.navigate(['/dashboard/employer']);
   }
 
   uploadLogo() {
+    // TODO: Implement logo upload
     console.log('Upload company logo');
   }
 

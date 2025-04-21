@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import {
   FormBuilder,
   FormControl,
@@ -10,6 +11,7 @@ import {
 import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { InputComponent } from '../../../shared/ui/input/input.component';
+import { JobService } from '../../../shared/services/job.service';
 
 interface JobPostingStep {
   id: number;
@@ -325,7 +327,11 @@ export class JobPostingComponent {
     },
   ];
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private jobService: JobService,
+    private router: Router
+  ) {
     this.initForm();
   }
 
@@ -412,6 +418,29 @@ export class JobPostingComponent {
     await this.submitJobPosting();
   }
 
+  private async submitJobPosting() {
+    this.isSubmitting = true;
+    try {
+      const jobData = {
+        ...this.jobForm.value,
+        requiredSkills: this.skills,
+        status: 'draft',
+      };
+
+      await this.jobService.createJob(jobData).toPromise();
+      alert('Job posted successfully!');
+      await this.router.navigate(['/dashboard/employer/jobs']);
+    } catch (error) {
+      alert(
+        error instanceof Error
+          ? error.message
+          : 'Failed to post job. Please try again.'
+      );
+    } finally {
+      this.isSubmitting = false;
+    }
+  }
+
   private getCurrentStepControls(): string[] {
     switch (this.currentStep) {
       case 1:
@@ -424,41 +453,6 @@ export class JobPostingComponent {
         return [];
       default:
         return [];
-    }
-  }
-
-  private async submitJobPosting() {
-    this.isSubmitting = true;
-    try {
-      const jobData = {
-        ...this.jobForm.value,
-        skills: this.skills,
-        status: 'active',
-        postedDate: new Date().toISOString(),
-      };
-
-      // Simulate API call
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          if (Math.random() > 0.2) {
-            // 80% success rate
-            resolve(true);
-          } else {
-            reject(new Error('Failed to post job. Please try again.'));
-          }
-        }, 1500);
-      });
-
-      // Show success message and redirect
-      alert('Job posted successfully!');
-      // TODO: Use router to navigate to jobs list
-      // this.router.navigate(['/dashboard/jobs']);
-    } catch (error) {
-      alert(
-        error instanceof Error ? error.message : 'An unexpected error occurred'
-      );
-      this.isSubmitting = false;
-      return;
     }
   }
 }

@@ -66,7 +66,6 @@ import {
               <div>
                 <h1 class="text-2xl font-medium">
                   {{ this.authService.currentUser?.firstName }}
-                  {{ this.authService.currentUser?.lastName }}
                 </h1>
               </div>
             </div>
@@ -75,253 +74,366 @@ import {
             }}</app-button>
           </div>
 
-          <form
-            [formGroup]="profileForm"
-            (ngSubmit)="onSubmit()"
-            class="space-y-6"
-          >
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <app-input
-                label="First Name"
-                formControlName="firstName"
-                [error]="getErrorMessage('firstName')"
-                [readonly]="!isEditing"
-              ></app-input>
-              <app-input
-                label="Last Name"
-                formControlName="lastName"
-                [error]="getErrorMessage('lastName')"
-                [readonly]="!isEditing"
-              ></app-input>
-              <app-input
-                label="Phone"
-                type="tel"
-                formControlName="phone"
-                [error]="getErrorMessage('phone')"
-                [readonly]="!isEditing"
-              ></app-input>
-              <app-input
-                label="Location"
-                formControlName="location"
-                [error]="getErrorMessage('location')"
-                [readonly]="!isEditing"
-              ></app-input>
-              <app-input
-                label="Experience Level"
-                formControlName="experienceLevel"
-                [error]="getErrorMessage('experienceLevel')"
-                [readonly]="!isEditing"
-              ></app-input>
-            </div>
-
-            <div>
-              <app-input
-                label="Bio"
-                type="textarea"
-                formControlName="bio"
-                [error]="getErrorMessage('bio')"
-                [readonly]="!isEditing"
-              ></app-input>
-            </div>
-
-            @if (isEditing) {
-            <div class="flex justify-end gap-4">
-              <app-button
-                type="button"
-                variant="secondary"
-                (click)="toggleEdit()"
-                >Cancel</app-button
-              >
-              <app-button type="submit" variant="primary" [loading]="isSaving"
-                >Save Changes</app-button
-              >
-            </div>
-            }
-          </form>
-        </div>
-
-        <!-- Job Seeker Specific Content -->
-        <ng-container *ngIf="authService.currentUser?.role === 'Job Seeker'">
-          <!-- Skills Section -->
-          <div
-            class="p-6 rounded-xl bg-background-light/30 border border-foreground-light/20"
-          >
-            <div class="flex justify-between items-center mb-6">
-              <h3 class="">Skills & Expertise</h3>
-              <app-button variant="secondary" (click)="toggleSkillEdit()">
-                {{ isEditingSkills ? 'Done' : 'Manage Skills' }}
-              </app-button>
-            </div>
-
-            @if (isEditingSkills) {
-            <div class="mb-6">
-              <div class="flex gap-2 mb-4">
+          <!-- Job Seeker Content -->
+          <ng-container *ngIf="authService.currentUser?.role === 'Job Seeker'">
+            <form
+              [formGroup]="profileForm"
+              (ngSubmit)="onSubmit()"
+              class="space-y-6"
+            >
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <app-input
-                  [formControl]="skillInput"
-                  placeholder="Add a skill (e.g. JavaScript)"
-                  (keyup.enter)="addSkill()"
+                  label="First Name"
+                  formControlName="firstName"
+                  [error]="getErrorMessage('firstName')"
+                  [readonly]="!isEditing"
                 ></app-input>
+                <app-input
+                  label="Last Name"
+                  formControlName="lastName"
+                  [error]="getErrorMessage('lastName')"
+                  [readonly]="!isEditing"
+                ></app-input>
+                <app-input
+                  label="Phone"
+                  type="tel"
+                  formControlName="phone"
+                  [error]="getErrorMessage('phone')"
+                  [readonly]="!isEditing"
+                ></app-input>
+                <app-input
+                  label="Location"
+                  formControlName="location"
+                  [error]="getErrorMessage('location')"
+                  [readonly]="!isEditing"
+                ></app-input>
+                <app-input
+                  label="Experience Level"
+                  formControlName="experienceLevel"
+                  [error]="getErrorMessage('experienceLevel')"
+                  [readonly]="!isEditing"
+                ></app-input>
+              </div>
+
+              <div>
+                <app-input
+                  label="Bio"
+                  type="textarea"
+                  formControlName="bio"
+                  [error]="getErrorMessage('bio')"
+                  [readonly]="!isEditing"
+                ></app-input>
+              </div>
+
+              @if (isEditing) {
+              <div class="flex justify-end gap-4">
                 <app-button
                   type="button"
                   variant="secondary"
-                  (click)="addSkill()"
-                  >Add</app-button
+                  (click)="toggleEdit()"
+                  >Cancel</app-button
+                >
+                <app-button type="submit" variant="primary" [loading]="isSaving"
+                  >Save Changes</app-button
                 >
               </div>
-            </div>
-            }
+              }
+            </form>
 
-            <div class="flex flex-wrap gap-2">
-              @for (skill of skills; track skill.name) {
-              <div
-                class="group flex items-center gap-2 px-3 py-1 rounded-full bg-background-light/30 border border-foreground-light/30"
-              >
-                <span class="">{{ skill.name }}</span>
+            <div
+              class="p-6 rounded-xl bg-background-light/30 border border-foreground-light/20"
+            >
+              <div class="flex justify-between items-center mb-6">
+                <h3 class="">Skills & Expertise</h3>
+                <app-button variant="secondary" (click)="toggleSkillEdit()">
+                  {{ isEditingSkills ? 'Done' : 'Manage Skills' }}
+                </app-button>
+              </div>
 
-                <div class="flex items-center gap-1">
-                  @if (isEditingSkills) {
-                  <button
+              @if (isEditingSkills) {
+              <div class="mb-6">
+                <div class="flex gap-2 mb-4">
+                  <app-input
+                    [formControl]="skillInput"
+                    placeholder="Add a skill (e.g. JavaScript)"
+                    (keyup.enter)="addSkill()"
+                  ></app-input>
+                  <app-button
                     type="button"
-                    (click)="removeSkill(skill)"
-                    class="text-foreground-light font-pop text-[0.65rem] hover:text-foreground"
+                    variant="secondary"
+                    (click)="addSkill()"
+                    >Add</app-button
                   >
-                    X
-                  </button>
-                  }
                 </div>
               </div>
               }
-            </div>
-          </div>
 
-          <!-- Portfolio Projects -->
-          <div
-            class="p-6 rounded-xl bg-background-light/30 border border-foreground-light/20"
-          >
-            <div class="flex justify-between items-center mb-6">
-              <h3 class="">Portfolio Projects</h3>
-              <app-button variant="secondary" (click)="toggleProjectEdit()">
-                {{ isEditingProjects ? 'Done' : 'Add Project' }}
-              </app-button>
-            </div>
-
-            @if (isEditingProjects) {
-            <form
-              [formGroup]="projectForm"
-              (ngSubmit)="addProject()"
-              class="mb-6 p-4 bg-background-light/50 rounded-lg border border-foreground-light/20"
-            >
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <app-input
-                  label="Project Name"
-                  formControlName="name"
-                  [error]="getProjectErrorMessage('name')"
-                ></app-input>
-                <app-input
-                  label="Project URL"
-                  formControlName="url"
-                  [error]="getProjectErrorMessage('url')"
-                ></app-input>
-              </div>
-              <app-input
-                label="Description"
-                type="textarea"
-                formControlName="description"
-                [error]="getProjectErrorMessage('description')"
-              ></app-input>
-              <div class="flex justify-end mt-4">
-                <app-button type="submit" variant="primary"
-                  >Add Project</app-button
+              <div class="flex flex-wrap gap-2">
+                @for (skill of skills; track skill.name) {
+                <div
+                  class="group flex items-center gap-2 px-3 py-1 rounded-full bg-background-light/30 border border-foreground-light/30"
                 >
-              </div>
-            </form>
-            }
+                  <span class="">{{ skill.name }}</span>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              @for (project of projects; track project.name) {
-              <div
-                class="p-4 rounded-lg bg-background-light/50 border border-foreground-light/20"
-              >
-                <div class="flex justify-between items-start mb-2">
-                  <div class="flex items-center gap-2">
-                    <div
-                      class="w-2 aspect-square rounded-full bg-accent/60 shrink-0"
-                    ></div>
-                    <h4 class="!font-light">{{ project.name }}</h4>
+                  <div class="flex items-center gap-1">
+                    @if (isEditingSkills) {
+                    <button
+                      type="button"
+                      (click)="removeSkill(skill)"
+                      class="text-foreground-light font-pop text-[0.65rem] hover:text-foreground"
+                    >
+                      X
+                    </button>
+                    }
                   </div>
-                  @if (isEditingProjects) {
-                  <button
-                    type="button"
-                    (click)="removeProject(project)"
-                    class="text-foreground-light hover:text-foreground"
-                  >
-                    ×
-                  </button>
-                  }
                 </div>
-                <p class="text-sm text-foreground-light mb-3">
-                  {{ project.description }}
-                </p>
-                @if (project.url) {
-                <a
-                  [href]="project.url"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-sm text-[var(--color-accent)] hover:underline"
-                  >View Project</a
-                >
                 }
               </div>
+            </div>
+
+            <div
+              class="p-6 rounded-xl bg-background-light/30 border border-foreground-light/20"
+            >
+              <div class="flex justify-between items-center mb-6">
+                <h3 class="">Portfolio Projects</h3>
+                <app-button variant="secondary" (click)="toggleProjectEdit()">
+                  {{ isEditingProjects ? 'Done' : 'Add Project' }}
+                </app-button>
+              </div>
+
+              @if (isEditingProjects) {
+              <form
+                [formGroup]="projectForm"
+                (ngSubmit)="addProject()"
+                class="mb-6 p-4 bg-background-light/50 rounded-lg border border-foreground-light/20"
+              >
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <app-input
+                    label="Project Name"
+                    formControlName="name"
+                    [error]="getProjectErrorMessage('name')"
+                  ></app-input>
+                  <app-input
+                    label="Project URL"
+                    formControlName="url"
+                    [error]="getProjectErrorMessage('url')"
+                  ></app-input>
+                </div>
+                <app-input
+                  label="Description"
+                  type="textarea"
+                  formControlName="description"
+                  [error]="getProjectErrorMessage('description')"
+                ></app-input>
+                <div class="mt-4">
+                  <label
+                    class="text-sm font-medium text-[var(--color-foreground-light)]"
+                    >Technologies Used</label
+                  >
+                  <div class="flex gap-2 mt-2">
+                    <app-input
+                      formControlName="skillInput"
+                      placeholder="Add a technology (e.g. Angular)"
+                      (keyup.enter)="addProjectSkill()"
+                    ></app-input>
+                    <app-button
+                      type="button"
+                      variant="secondary"
+                      (click)="addProjectSkill()"
+                      >Add</app-button
+                    >
+                  </div>
+                  <div class="flex flex-wrap gap-2 mt-2">
+                    @for (skill of projectForm.get('skillsUsed')?.value; track
+                    skill) {
+                    <div
+                      class="group flex items-center gap-2 px-3 py-1 rounded-full bg-background-light/30 border border-foreground-light/30"
+                    >
+                      <span>{{ skill }}</span>
+                      <button
+                        type="button"
+                        (click)="removeProjectSkill(skill)"
+                        class="text-foreground-light font-pop text-[0.65rem] hover:text-foreground"
+                      >
+                        ×
+                      </button>
+                    </div>
+                    }
+                  </div>
+                </div>
+                <div class="flex justify-end mt-4">
+                  <app-button
+                    type="submit"
+                    variant="primary"
+                    [disabled]="!projectForm.valid"
+                    >Add Project</app-button
+                  >
+                </div>
+              </form>
               }
-            </div>
-          </div>
-        </ng-container>
 
-        <!-- Employer Specific Content -->
-        <ng-container
-          *ngIf="authService.currentUser?.role === 'Employer/Recruiter'"
-        >
-          <!-- Company Information -->
-          <div
-            class="p-6 rounded-xl bg-background-light/30 border border-foreground-light/20"
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                @for (project of projects; track project.id) {
+                <div
+                  class="p-4 rounded-lg bg-background-light/50 border border-foreground-light/20"
+                >
+                  <div class="flex justify-between items-start mb-2">
+                    <div class="flex items-center gap-2">
+                      <div
+                        class="w-2 aspect-square rounded-full bg-accent/60 shrink-0"
+                      ></div>
+                      <h4 class="!font-light">{{ project.name }}</h4>
+                    </div>
+                    @if (isEditingProjects) {
+                    <button
+                      type="button"
+                      (click)="removeProject(project)"
+                      class="text-foreground-light hover:text-foreground"
+                    >
+                      ×
+                    </button>
+                    }
+                  </div>
+                  <p class="text-sm text-foreground-light mb-3">
+                    {{ project.description }}
+                  </p>
+                  @if (project.url) {
+                  <a
+                    [href]="project.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-sm text-[var(--color-accent)] hover:underline inline-block mb-2"
+                    >View Project</a
+                  >
+                  } @if (project.skillsUsed?.length) {
+                  <div class="flex flex-wrap gap-2">
+                    @for (skill of project.skillsUsed; track skill) {
+                    <div
+                      class="px-2 py-1 text-xs rounded-full bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
+                    >
+                      {{ skill }}
+                    </div>
+                    }
+                  </div>
+                  }
+                </div>
+                }
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Employer Content -->
+          <ng-container
+            *ngIf="authService.currentUser?.role === 'Employer/Recruiter'"
           >
-            <div class="flex justify-between items-center mb-6">
-              <h2 class="text-xl font-medium">Company Information</h2>
-              <app-button variant="secondary" (click)="toggleCompanyEdit()">
-                {{ isEditingCompany ? 'Done' : 'Edit' }}
-              </app-button>
-            </div>
+            <form
+              [formGroup]="companyForm"
+              (ngSubmit)="onSubmit()"
+              class="space-y-8"
+            >
+              <!-- Basic Company Info -->
+              <div class="space-y-4">
+                <h3 class="text-lg font-medium mb-4">
+                  Basic Company Information
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <app-input
+                    label="Company Name"
+                    formControlName="companyName"
+                    [error]="getCompanyErrorMessage('companyName')"
+                    [readonly]="!isEditing"
+                  ></app-input>
+                  <app-input
+                    label="Industry"
+                    formControlName="industry"
+                    [error]="getCompanyErrorMessage('industry')"
+                    [readonly]="!isEditing"
+                  ></app-input>
+                  <app-input
+                    label="Company Size"
+                    formControlName="companySize"
+                    [error]="getCompanyErrorMessage('companySize')"
+                    [readonly]="!isEditing"
+                    placeholder="e.g. 50-100 employees"
+                  ></app-input>
+                  <app-input
+                    label="Website"
+                    formControlName="website"
+                    [error]="getCompanyErrorMessage('website')"
+                    [readonly]="!isEditing"
+                  ></app-input>
+                </div>
+                <app-input
+                  label="Company Description"
+                  type="textarea"
+                  formControlName="description"
+                  [error]="getCompanyErrorMessage('description')"
+                  [readonly]="!isEditing"
+                ></app-input>
+              </div>
 
-            <div class="space-y-4">
-              <app-input
-                label="Company Name"
-                formControlName="companyName"
-                [error]="getCompanyErrorMessage('name')"
-              ></app-input>
-              <app-input
-                label="Industry"
-                formControlName="industry"
-                [error]="getCompanyErrorMessage('industry')"
-              ></app-input>
-              <app-input
-                label="Company Size"
-                formControlName="companySize"
-                [error]="getCompanyErrorMessage('size')"
-              ></app-input>
-              <app-input
-                label="Company Website"
-                formControlName="website"
-                [error]="getCompanyErrorMessage('website')"
-              ></app-input>
-              <app-input
-                label="Company Description"
-                type="textarea"
-                formControlName="description"
-                [error]="getCompanyErrorMessage('description')"
-              ></app-input>
-            </div>
-          </div>
-        </ng-container>
+              <!-- Work Environment & Culture -->
+              <div class="space-y-4">
+                <h3 class="text-lg font-medium mb-4">
+                  Work Environment & Culture
+                </h3>
+                <div class="grid grid-cols-1 gap-6">
+                  <app-input
+                    label="Work Locations"
+                    formControlName="workLocations"
+                    [error]="getCompanyErrorMessage('workLocations')"
+                    [readonly]="!isEditing"
+                    placeholder="e.g. Hybrid, Remote, Office locations"
+                  ></app-input>
+                  <app-input
+                    label="Benefits & Perks"
+                    type="textarea"
+                    formControlName="benefits"
+                    [error]="getCompanyErrorMessage('benefits')"
+                    [readonly]="!isEditing"
+                    placeholder="List your company benefits and perks"
+                  ></app-input>
+                  <app-input
+                    label="Salary Range"
+                    formControlName="salaryRange"
+                    [error]="getCompanyErrorMessage('salaryRange')"
+                    [readonly]="!isEditing"
+                    placeholder="e.g. $80,000 - $120,000"
+                  ></app-input>
+                </div>
+              </div>
+
+              <!-- Hiring Details -->
+              <div class="space-y-4">
+                <h3 class="text-lg font-medium mb-4">Hiring Process</h3>
+                <div class="grid grid-cols-1 gap-6">
+                  <app-input
+                    label="Interview Process"
+                    type="textarea"
+                    formControlName="interviewProcess"
+                    [error]="getCompanyErrorMessage('interviewProcess')"
+                    [readonly]="!isEditing"
+                    placeholder="Describe your interview stages and process"
+                  ></app-input>
+                </div>
+              </div>
+
+              @if (isEditing) {
+              <div class="flex justify-end gap-4">
+                <app-button
+                  type="button"
+                  variant="secondary"
+                  (click)="toggleEdit()"
+                  >Cancel</app-button
+                >
+                <app-button type="submit" variant="primary" [loading]="isSaving"
+                  >Save Changes</app-button
+                >
+              </div>
+              }
+            </form>
+          </ng-container>
+        </div>
       </div>
     </app-dashboard-layout>
   `,
@@ -362,6 +474,8 @@ export class ProfileComponent implements OnInit {
       name: ['', [Validators.required]],
       description: ['', [Validators.required]],
       url: [''],
+      skillInput: [''],
+      skillsUsed: [[]],
     });
 
     this.companyForm = this.fb.group({
@@ -370,6 +484,10 @@ export class ProfileComponent implements OnInit {
       companySize: ['', [Validators.required]],
       website: ['', [Validators.required, Validators.pattern('https?://.+')]],
       description: ['', [Validators.required]],
+      workLocations: ['', [Validators.required]],
+      benefits: ['', [Validators.required]],
+      salaryRange: ['', [Validators.required]],
+      interviewProcess: ['', [Validators.required]],
     });
   }
 
@@ -383,19 +501,38 @@ export class ProfileComponent implements OnInit {
       next: (profile) => {
         this.profile = profile;
         if (profile) {
-          this.profileForm.patchValue({
-            firstName: profile.firstName,
-            lastName: profile.lastName,
-            phone: profile.phone,
-            location: profile.location,
-            experienceLevel: profile.experienceLevel,
-            bio: profile.bio,
-          });
+          // Handle job seeker profile
+          if (this.authService.currentUser?.role === 'Job Seeker') {
+            this.profileForm.patchValue({
+              firstName: profile.firstName,
+              lastName: profile.lastName,
+              phone: profile.phone,
+              location: profile.location,
+              experienceLevel: profile.experienceLevel,
+              bio: profile.bio,
+            });
 
-          if (profile.skills) {
-            this.skills = profile.skills.map((skill: any) => ({
-              name: skill,
-            }));
+            if (profile.skills) {
+              this.skills = profile.skills.map((skill: any) => ({
+                name: skill,
+              }));
+            }
+          }
+          // Handle employer profile
+          else if (
+            this.authService.currentUser?.role === 'Employer/Recruiter'
+          ) {
+            this.companyForm.patchValue({
+              companyName: profile.firstName,
+              industry: profile.industry,
+              companySize: profile.companySize,
+              website: profile.website,
+              description: profile.description,
+              workLocations: profile.workLocations,
+              benefits: profile.benefits,
+              salaryRange: profile.salaryRange,
+              interviewProcess: profile.interviewProcess,
+            });
           }
         }
       },
@@ -540,60 +677,161 @@ export class ProfileComponent implements OnInit {
       };
 
       // Optimistically add to UI
-      this.projects.push(newProject);
-      this.projectForm.reset();
+      this.projects = [...this.projects, newProject];
 
-      // TODO: Add API call to save project when backend is ready
+      // Make API call
+      this.dashboardService.addProject(newProject).subscribe({
+        next: (savedProject) => {
+          // Replace optimistic project with saved one
+          this.projects = this.projects.map((p) =>
+            p.name === newProject.name ? savedProject : p
+          );
+          this.projectForm.reset();
+        },
+        error: (error) => {
+          console.error('Error saving project:', error);
+          // Revert optimistic update on error
+          this.projects = this.projects.filter(
+            (p) => p.name !== newProject.name
+          );
+          alert('Failed to save project. Please try again.');
+        },
+      });
     }
   }
 
   removeProject(project: Project) {
-    this.projects = this.projects.filter((p) => p.id !== project.id);
-    // TODO: Add API call to delete project when backend is ready
-  }
-
-  async onSubmit() {
-    if (!this.profileForm.valid) {
-      Object.keys(this.profileForm.controls).forEach((key) => {
-        const control = this.profileForm.get(key);
-        if (control?.invalid) {
-          control.markAsTouched();
-        }
-      });
+    if (!project.id) {
+      console.error('Cannot delete project without ID');
       return;
     }
 
-    this.isSaving = true;
-    try {
-      const formValues = this.profileForm.value;
-      const updatedProfile = await this.dashboardService
-        .updateProfile({
-          firstName: formValues.firstName,
-          lastName: formValues.lastName,
-          phone: formValues.phone,
-          location: formValues.location,
-          experienceLevel: formValues.experienceLevel,
-          bio: formValues.bio,
-          skills: this.skills.map((s) => s.name),
-        })
-        .toPromise();
+    // Optimistically remove from UI
+    const previousProjects = [...this.projects];
+    this.projects = this.projects.filter((p) => p.id !== project.id);
 
-      if (updatedProfile) {
-        this.profile = updatedProfile;
-        this.toggleEdit();
+    // Make API call
+    this.dashboardService.deleteProject(project.id).subscribe({
+      error: (error) => {
+        console.error('Error deleting project:', error);
+        // Revert optimistic update on error
+        this.projects = previousProjects;
+        alert('Failed to delete project. Please try again.');
+      },
+    });
+  }
+
+  addProjectSkill() {
+    const skillControl = this.projectForm.get('skillInput');
+    const skill = skillControl?.value?.trim();
+    if (skill) {
+      const skills = this.projectForm.get('skillsUsed')?.value || [];
+      if (!skills.includes(skill)) {
+        this.projectForm.patchValue({
+          skillsUsed: [...skills, skill],
+        });
+      }
+      if (skillControl) {
+        skillControl.reset();
+      }
+    }
+  }
+
+  removeProjectSkill(skillToRemove: string) {
+    const skills = this.projectForm.get('skillsUsed')?.value || [];
+    this.projectForm.patchValue({
+      skillsUsed: skills.filter((skill: string) => skill !== skillToRemove),
+    });
+  }
+
+  async onSubmit() {
+    // For job seeker profile
+    if (this.authService.currentUser?.role === 'Job Seeker') {
+      if (!this.profileForm.valid) {
+        Object.keys(this.profileForm.controls).forEach((key) => {
+          const control = this.profileForm.get(key);
+          if (control?.invalid) {
+            control.markAsTouched();
+          }
+        });
+        return;
       }
 
-      // Show success message
-      alert('Profile updated successfully!');
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      alert(
-        error instanceof Error
-          ? error.message
-          : 'Failed to update profile. Please try again.'
-      );
-    } finally {
-      this.isSaving = false;
+      this.isSaving = true;
+      try {
+        const formValues = this.profileForm.value;
+        const updatedProfile = await this.dashboardService
+          .updateProfile({
+            firstName: formValues.firstName,
+            lastName: formValues.lastName,
+            phone: formValues.phone,
+            location: formValues.location,
+            experienceLevel: formValues.experienceLevel,
+            bio: formValues.bio,
+            skills: this.skills.map((s) => s.name),
+          })
+          .toPromise();
+
+        if (updatedProfile) {
+          this.profile = updatedProfile;
+          this.toggleEdit();
+        }
+        alert('Profile updated successfully!');
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        alert(
+          error instanceof Error
+            ? error.message
+            : 'Failed to update profile. Please try again.'
+        );
+      } finally {
+        this.isSaving = false;
+      }
+    }
+    // For employer profile
+    else if (this.authService.currentUser?.role === 'Employer/Recruiter') {
+      if (!this.companyForm.valid) {
+        Object.keys(this.companyForm.controls).forEach((key) => {
+          const control = this.companyForm.get(key);
+          if (control?.invalid) {
+            control.markAsTouched();
+          }
+        });
+        return;
+      }
+
+      this.isSaving = true;
+      try {
+        const formValues = this.companyForm.value;
+        const updatedProfile = await this.dashboardService
+          .updateProfile({
+            firstName: formValues.companyName, // Using firstName field for company name
+            industry: formValues.industry,
+            companySize: formValues.companySize,
+            website: formValues.website,
+            description: formValues.description,
+            workLocations: formValues.workLocations,
+            benefits: formValues.benefits,
+            salaryRange: formValues.salaryRange,
+            interviewProcess: formValues.interviewProcess,
+          })
+          .toPromise();
+
+        if (updatedProfile) {
+          this.profile = updatedProfile;
+          this.toggleEdit();
+        }
+        alert('Company profile updated successfully!');
+      } catch (error) {
+        console.error('Error updating company profile:', error);
+        alert(
+          error instanceof Error
+            ? error.message
+            : 'Failed to update company profile. Please try again.'
+        );
+      } finally {
+        this.isSaving = false;
+      }
     }
   }
 

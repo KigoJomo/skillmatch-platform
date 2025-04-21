@@ -37,12 +37,20 @@ export interface Job {
   id: string;
   title: string;
   description: string;
+  department: string;
   location: string;
-  salaryRange?: string;
+  experienceLevel: string;
+  educationRequirements: string;
+  employmentType: string;
+  salaryRange: string;
+  benefits: string;
+  workingHours: string;
   requiredSkills: string[];
+  status: 'draft' | 'active' | 'closed';
   recruiter: User;
-  createdAt: Date;
-  updatedAt: Date;
+  applications: JobApplication[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface JobListing extends Job {
@@ -52,11 +60,15 @@ export interface JobListing extends Job {
 
 export interface JobApplication {
   id: string;
-  applicant: User;
+  applicant: User & {
+    profile: Profile;
+  };
   job: Job;
   coverLetter: string;
   status: 'Pending' | 'Accepted' | 'Rejected';
-  appliedAt: Date;
+  appliedAt: string;
+  updatedAt: string;
+  matchPercentage: number;
 }
 
 export interface DashboardData {
@@ -71,6 +83,7 @@ export interface Project {
   name: string;
   description: string;
   url?: string;
+  skillsUsed?: string[];
   createdAt: string;
   updatedAt: string;
 }

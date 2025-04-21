@@ -15,10 +15,16 @@
     </div>
 
     <form class="mt-8 flex flex-col gap-6" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      <!-- Conditional form fields based on role -->
       <div class="space-y-4">
-        <div class="grid grid-cols-2 gap-4">
+        <div *ngIf="selectedRole === 'Job Seeker'" class="grid grid-cols-2 gap-4">
           <app-input label="First Name" formControlName="firstName" [error]="getErrorMessage('firstName')"></app-input>
           <app-input label="Last Name" formControlName="lastName" [error]="getErrorMessage('lastName')"></app-input>
+        </div>
+        <div *ngIf="selectedRole !== 'Job Seeker'">
+          <app-input label="Company Name" formControlName="firstName"
+            [error]="getErrorMessage('firstName')"></app-input>
+          <input type="hidden" formControlName="lastName" />
         </div>
 
         <app-input label="Email" type="email" formControlName="email" [error]="getErrorMessage('email')"></app-input>

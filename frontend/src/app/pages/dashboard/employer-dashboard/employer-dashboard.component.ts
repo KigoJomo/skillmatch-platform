@@ -1,6 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.component';
+import {
+  DashboardService,
+  EmployerDashboardData,
+  EmployerAnalytics,
+} from '../../../shared/services/dashboard.service';
 
 @Component({
   selector: 'app-employer-dashboard',
@@ -18,7 +23,9 @@ import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.c
               <h5 class="text-sm text-foreground-light">Posted Jobs</h5>
               <span class="text-xs text-green-500">+5%</span>
             </div>
-            <p class="text-2xl font-semibold">120</p>
+            <p class="text-2xl font-semibold">
+              {{ dashboardData?.metrics?.postedJobs ?? 0 }}
+            </p>
           </div>
           <div
             class="p-4 rounded-lg bg-background-light/50 border border-foreground-light/20"
@@ -27,16 +34,20 @@ import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.c
               <h5 class="text-sm text-foreground-light">Applications</h5>
               <span class="text-xs text-green-500">+10%</span>
             </div>
-            <p class="text-2xl font-semibold">450</p>
+            <p class="text-2xl font-semibold">
+              {{ dashboardData?.metrics?.totalApplications ?? 0 }}
+            </p>
           </div>
           <div
             class="p-4 rounded-lg bg-background-light/50 border border-foreground-light/20"
           >
             <div class="flex justify-between items-start mb-2">
-              <h5 class="text-sm text-foreground-light">Interviews</h5>
+              <h5 class="text-sm text-foreground-light">Active Jobs</h5>
               <span class="text-xs text-green-500">+2%</span>
             </div>
-            <p class="text-2xl font-semibold">30</p>
+            <p class="text-2xl font-semibold">
+              {{ dashboardData?.metrics?.activeJobs ?? 0 }}
+            </p>
           </div>
           <div
             class="p-4 rounded-lg bg-background-light/50 border border-foreground-light/20"
@@ -45,7 +56,9 @@ import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.c
               <h5 class="text-sm text-foreground-light">Hires</h5>
               <span class="text-xs text-green-500">+1%</span>
             </div>
-            <p class="text-2xl font-semibold">15</p>
+            <p class="text-2xl font-semibold">
+              {{ dashboardData?.metrics?.totalHires ?? 0 }}
+            </p>
           </div>
         </div>
 
@@ -60,8 +73,12 @@ import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.c
               <div>
                 <h4 class="text-lg font-medium">Applications</h4>
                 <div class="flex items-center gap-2">
-                  <span class="text-2xl font-semibold">450</span>
-                  <span class="text-xs text-green-500">+10%</span>
+                  <span class="text-2xl font-semibold">{{
+                    totalApplications
+                  }}</span>
+                  <span class="text-xs text-green-500"
+                    >+{{ applicationGrowth }}%</span
+                  >
                 </div>
               </div>
               <button
@@ -72,20 +89,23 @@ import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.c
             </div>
             <!-- Area Chart Placeholder -->
             <div class="h-[200px] relative">
-              <!-- Replace the placeholder divs with an SVG element -->
               <svg
                 class="w-full h-full"
                 viewBox="0 0 300 100"
                 preserveAspectRatio="none"
               >
                 <path
-                  d="M0,80 C20,70 40,90 60,75 C80,60 100,50 120,55 C140,60 160,40 180,45 C200,50 220,40 240,45 C260,50 280,40 300,35"
+                  [attr.d]="
+                    generateChartPath(dashboardData?.hiringActivity || [])
+                  "
                   stroke="var(--color-accent)"
                   stroke-width="2"
                   fill="none"
                 />
                 <path
-                  d="M0,80 C20,70 40,90 60,75 C80,60 100,50 120,55 C140,60 160,40 180,45 C200,50 220,40 240,45 C260,50 280,40 300,35 L300,100 L0,100 Z"
+                  [attr.d]="
+                    generateAreaPath(dashboardData?.hiringActivity || [])
+                  "
                   fill="var(--color-accent)"
                   fill-opacity="0.1"
                 />
@@ -94,62 +114,95 @@ import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.c
               <div
                 class="absolute bottom-[-20px] left-0 w-full flex justify-between text-xs text-foreground-light"
               >
-                <span>Jan</span>
-                <span>Feb</span>
-                <span>Mar</span>
+                <span *ngFor="let month of getLastThreeMonths()">{{
+                  month
+                }}</span>
               </div>
             </div>
           </div>
 
-          <!-- Hires Chart -->
+          <!-- Recent Activity -->
           <div
             class="p-6 rounded-xl bg-background-light/30 border border-foreground-light/20"
           >
             <div class="flex justify-between items-center mb-4">
-              <div>
-                <h4 class="text-lg font-medium">Hires</h4>
-                <div class="flex items-center gap-2">
-                  <span class="text-2xl font-semibold">15</span>
-                  <span class="text-xs text-green-500">+1%</span>
+              <h4 class="text-lg font-medium">Recent Activity</h4>
+            </div>
+            <div class="space-y-4">
+              <div *ngFor="let activity of dashboardData?.recentActivity">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="font-medium">{{ activity.candidateName }}</p>
+                    <p class="text-sm text-foreground-light">
+                      {{ activity.jobTitle }}
+                    </p>
+                  </div>
+                  <div class="text-right">
+                    <p
+                      class="text-sm"
+                      [class]="getStatusColor(activity.status)"
+                    >
+                      {{ activity.status }}
+                    </p>
+                    <p class="text-xs text-foreground-light">
+                      {{ formatDate(activity.date) }}
+                    </p>
+                  </div>
                 </div>
               </div>
-              <button
-                class="text-sm text-foreground-light hover:text-[var(--color-accent)]"
-              >
-                •••
-              </button>
             </div>
-            <!-- Bar Chart Placeholder -->
-            <div class="h-[200px] flex items-end justify-between gap-4 px-4">
-              <div
-                class="w-8 h-[30%] bg-[var(--color-accent)]/60 rounded-t"
-              ></div>
-              <div
-                class="w-8 h-[45%] bg-[var(--color-accent)]/60 rounded-t"
-              ></div>
-              <div
-                class="w-8 h-[65%] bg-[var(--color-accent)]/60 rounded-t"
-              ></div>
-              <div
-                class="w-8 h-[55%] bg-[var(--color-accent)]/60 rounded-t"
-              ></div>
-              <div
-                class="w-8 h-[80%] bg-[var(--color-accent)]/60 rounded-t"
-              ></div>
-              <div
-                class="w-8 h-[40%] bg-[var(--color-accent)]/60 rounded-t"
-              ></div>
+          </div>
+        </div>
+
+        <!-- Analytics Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Application Funnel -->
+          <div
+            class="p-6 rounded-xl bg-background-light/30 border border-foreground-light/20"
+          >
+            <h4 class="text-lg font-medium mb-4">Application Funnel</h4>
+            <div class="space-y-4">
+              <div *ngFor="let stat of analytics?.applicationFunnel">
+                <div>
+                  <div class="flex justify-between text-sm mb-1">
+                    <span>{{ stat.status }}</span>
+                    <span>{{ stat.count }}</span>
+                  </div>
+                  <div
+                    class="h-2 bg-background-light/30 rounded-full overflow-hidden"
+                  >
+                    <div
+                      class="h-full bg-[var(--color-accent)]"
+                      [style.width.%]="calculateFunnelWidth(stat)"
+                    ></div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <!-- Month labels -->
-            <div
-              class="mt-2 flex justify-between px-4 text-xs text-foreground-light"
-            >
-              <span>Jan</span>
-              <span>Feb</span>
-              <span>Mar</span>
-              <span>Apr</span>
-              <span>May</span>
-              <span>Jun</span>
+          </div>
+
+          <!-- Top Required Skills -->
+          <div
+            class="p-6 rounded-xl bg-background-light/30 border border-foreground-light/20"
+          >
+            <h4 class="text-lg font-medium mb-4">Top Required Skills</h4>
+            <div class="space-y-4">
+              <div *ngFor="let skill of analytics?.topRequiredSkills">
+                <div>
+                  <div class="flex justify-between text-sm mb-1">
+                    <span>{{ skill.skill }}</span>
+                    <span>{{ skill.count }}</span>
+                  </div>
+                  <div
+                    class="h-2 bg-background-light/30 rounded-full overflow-hidden"
+                  >
+                    <div
+                      class="h-full bg-[var(--color-accent)]"
+                      [style.width.%]="calculateSkillWidth(skill)"
+                    ></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -157,4 +210,124 @@ import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.c
     </app-dashboard-layout>
   `,
 })
-export class EmployerDashboardComponent {}
+export class EmployerDashboardComponent implements OnInit {
+  dashboardData?: EmployerDashboardData;
+  analytics?: EmployerAnalytics;
+  totalApplications = 0;
+  applicationGrowth = 0;
+
+  constructor(private dashboardService: DashboardService) {}
+
+  ngOnInit() {
+    this.loadDashboardData();
+    this.loadAnalytics();
+  }
+
+  private async loadDashboardData() {
+    try {
+      this.dashboardData = await this.dashboardService
+        .getEmployerDashData()
+        .toPromise();
+      this.calculateApplicationMetrics();
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    }
+  }
+
+  private async loadAnalytics() {
+    try {
+      this.analytics = await this.dashboardService
+        .getEmployerAnalytics()
+        .toPromise();
+    } catch (error) {
+      console.error('Error loading analytics:', error);
+    }
+  }
+
+  private calculateApplicationMetrics() {
+    if (this.dashboardData?.hiringActivity) {
+      const activity = this.dashboardData.hiringActivity;
+      if (activity.length >= 2) {
+        const current = activity[activity.length - 1].count;
+        const previous = activity[activity.length - 2].count;
+        this.totalApplications = current;
+        this.applicationGrowth = previous
+          ? Math.round(((current - previous) / previous) * 100)
+          : 0;
+      }
+    }
+  }
+
+  getStatusColor(status: string): string {
+    switch (status.toLowerCase()) {
+      case 'accepted':
+        return 'text-green-500';
+      case 'rejected':
+        return 'text-red-500';
+      case 'pending':
+        return 'text-yellow-500';
+      default:
+        return '';
+    }
+  }
+
+  formatDate(date: string): string {
+    const d = new Date(date);
+    const now = new Date();
+    const diff = now.getTime() - d.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days} days ago`;
+    return d.toLocaleDateString();
+  }
+
+  generateChartPath(activity: { count: number; month: string }[]): string {
+    if (!activity.length) return '';
+
+    const maxCount = Math.max(...activity.map((a) => a.count));
+    const points = activity.map((a, i) => {
+      const x = (i / (activity.length - 1)) * 300;
+      const y = 100 - (a.count / maxCount) * 65;
+      return `${i === 0 ? 'M' : 'L'} ${x},${y}`;
+    });
+
+    return points.join(' ');
+  }
+
+  generateAreaPath(activity: { count: number; month: string }[]): string {
+    if (!activity.length) return '';
+
+    const maxCount = Math.max(...activity.map((a) => a.count));
+    const points = activity.map((a, i) => {
+      const x = (i / (activity.length - 1)) * 300;
+      const y = 100 - (a.count / maxCount) * 65;
+      return `${i === 0 ? 'M' : 'L'} ${x},${y}`;
+    });
+
+    return points.join(' ') + ` L300,100 L0,100 Z`;
+  }
+
+  getLastThreeMonths(): string[] {
+    const months = [];
+    for (let i = 2; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      months.push(d.toLocaleString('default', { month: 'short' }));
+    }
+    return months;
+  }
+
+  calculateFunnelWidth(stat: { count: number }): number {
+    const total =
+      this.analytics?.applicationFunnel.reduce((sum, s) => sum + s.count, 0) ||
+      0;
+    return total ? (stat.count / total) * 100 : 0;
+  }
+
+  calculateSkillWidth(skill: { count: number }): number {
+    const maxCount = this.analytics?.topRequiredSkills[0]?.count || 0;
+    return maxCount ? (skill.count / maxCount) * 100 : 0;
+  }
+}

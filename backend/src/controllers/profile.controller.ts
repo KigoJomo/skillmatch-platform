@@ -79,7 +79,9 @@ export class ProfileController {
       }
 
       user.onboardingCompleted = true;
-      await userRepository.save(user);
+      const updatedUser = await userRepository.save(user);
+
+      console.log(updatedUser)
 
       res.json({ message: 'Onboarding completed successfully!' });
       return;
@@ -125,6 +127,46 @@ export class ProfileController {
     } catch (error) {
       console.error('Error fetching projects:', error);
       res.status(500).json({ error: 'Failed to fetch projects' });
+    }
+  }
+
+  static async createProject(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user?.id;
+      const projectData = req.body;
+
+      const project = projectRepository.create({
+        ...projectData,
+        user: { id: userId },
+      });
+
+      const savedProject = await projectRepository.save(project);
+      res.json(savedProject);
+    } catch (error) {
+      console.error('Error creating project:', error);
+      res.status(500).json({ error: 'Failed to create project' });
+    }
+  }
+
+  static async deleteProject(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user?.id;
+      const projectId = req.params.id;
+
+      const project = await projectRepository.findOne({
+        where: { id: projectId, user: { id: userId } },
+      });
+
+      if (!project) {
+        res.status(404).json({ error: 'Project not found' });
+        return;
+      }
+
+      await projectRepository.remove(project);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      res.status(500).json({ error: 'Failed to delete project' });
     }
   }
 }

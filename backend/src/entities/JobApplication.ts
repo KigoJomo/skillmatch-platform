@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { User } from './User';
 import { Job } from './Job';
 
@@ -7,10 +14,10 @@ export class JobApplication {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @ManyToOne(() => User, (user) => user.id)
+  @ManyToOne(() => User, (user) => user.applications)
   applicant!: User;
 
-  @ManyToOne(() => Job, (job) => job.id)
+  @ManyToOne(() => Job, (job) => job.applications)
   job!: Job;
 
   @Column('text')
@@ -19,6 +26,12 @@ export class JobApplication {
   @Column({ default: 'Pending' })
   status!: 'Pending' | 'Accepted' | 'Rejected';
 
+  @Column({ type: 'float', default: 0 })
+  matchPercentage!: number;
+
   @CreateDateColumn()
   appliedAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
 }

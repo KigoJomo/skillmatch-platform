@@ -61,6 +61,7 @@ export class LoginComponent {
 
   private async navigateToDashboard() {
     if (this.authService.shouldShowOnboarding()) {
+      console.log(`>>>>>> Onboarding: ${this.authService.currentUser?.onboardingCompleted}`)
       await this.router.navigate(['/onboarding']);
       return;
     }

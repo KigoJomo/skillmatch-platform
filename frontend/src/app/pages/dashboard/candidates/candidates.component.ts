@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
-import { RouterLink } from '@angular/router';
 
 interface Candidate {
   id: string;

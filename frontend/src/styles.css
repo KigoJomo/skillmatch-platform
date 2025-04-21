@@ -68,6 +68,12 @@ strong {
   font-weight: medium;
 }
 
+input{
+  ::placeholder{
+    font-size: 0.6rem;
+  }
+}
+
 input[type="checkbox"]:checked {
   accent-color: var(--color-accent);
 }

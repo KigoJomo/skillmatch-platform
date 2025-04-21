@@ -5,8 +5,11 @@ import {
   ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { User } from './User';
+import { JobApplication } from './JobApplication';
+import { JobMatch } from './JobMatch';
 
 @Entity()
 export class Job {
@@ -22,14 +25,41 @@ export class Job {
   @Column()
   location!: string;
 
+  @Column()
+  department!: string;
+
+  @Column()
+  employmentType!: string;
+
   @Column({ nullable: true })
   salaryRange!: string;
 
-  @ManyToOne(() => User, (user) => user.id)
+  @Column('text')
+  experience!: string;
+
+  @Column('text')
+  education!: string;
+
+  @Column('text')
+  benefits!: string;
+
+  @Column()
+  workingHours!: string;
+
+  @Column('simple-array')
+  requiredSkills!: string[];
+
+  @Column({ default: 'draft' })
+  status!: 'draft' | 'active' | 'closed';
+
+  @ManyToOne(() => User, (user) => user.jobs)
   recruiter!: User;
 
-  @Column('simple-array', { nullable: true })
-  requiredSkills!: string[];
+  @OneToMany(() => JobApplication, (application) => application.job)
+  applications!: JobApplication[];
+
+  @OneToMany(() => JobMatch, (match) => match.job)
+  matches!: JobMatch[];
 
   @CreateDateColumn()
   createdAt!: Date;

@@ -11,5 +11,7 @@ router.patch('/', ProfileController.updateProfile);
 router.post('/onboarding', ProfileController.completeOnboarding);
 router.patch('/onboarding', ProfileController.skipOnboarding);
 router.get('/projects', ProfileController.getUserProjects);
+router.post('/projects', ProfileController.createProject);
+router.delete('/projects/:id', ProfileController.deleteProject);
 
 export { router as ProfileRoutes };

@@ -1,16 +1,25 @@
-import { Column, CreateDateColumn, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { Profile } from "./Profile";
-import { ChatSession } from "./ChatSession";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { Profile } from './Profile';
+import { ChatSession } from './ChatSession';
 import { JobApplication } from './JobApplication';
-import { Project } from "./Project";
+import { Project } from './Project';
+import { Job } from './Job';
 
-export enum UserRole{
+export enum UserRole {
   SEEKER = 'Job Seeker',
-  EMPLOYER = 'Employer/Recruiter'
+  EMPLOYER = 'Employer/Recruiter',
 }
 
 @Entity()
-export class User{
+export class User {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
@@ -42,5 +51,8 @@ export class User{
   applications!: JobApplication[];
 
   @OneToMany(() => Project, (project) => project.user)
-  projects!: Project[]
+  projects!: Project[];
+
+  @OneToMany(() => Job, (job) => job.recruiter)
+  jobs!: Job[];
 }

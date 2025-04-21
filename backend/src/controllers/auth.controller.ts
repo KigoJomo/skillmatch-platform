@@ -121,6 +121,7 @@ export class AuthController {
         role: user.role,
         firstName: user.profile.firstName,
         lastName: user.profile.lastName,
+        onboardingCompleted: user.onboardingCompleted
       });
     } catch (error) {
       console.error('Get current user error:', error);

@@ -23,8 +23,8 @@ export const routes: Routes = [
         canActivate: [
           authGuard({
             requiredRole: UserRole.JOB_SEEKER,
-            redirectTo: '/dashboard/seeker'
-          })
+            redirectTo: '/dashboard/seeker',
+          }),
         ],
         children: [
           {
@@ -56,7 +56,7 @@ export const routes: Routes = [
         canActivate: [
           authGuard({
             requiredRole: UserRole.EMPLOYER,
-            redirectTo: '/dashboard/employer'
+            redirectTo: '/dashboard/employer',
           }),
         ],
         children: [
@@ -95,6 +95,20 @@ export const routes: Routes = [
               import('./pages/dashboard/ai-chat/ai-chat.component').then(
                 (c) => c.AIChatComponent
               ),
+          },
+          {
+            path: 'jobs/:id',
+            loadComponent: () =>
+              import(
+                './pages/dashboard/job-posting/job-posting.component'
+              ).then((m) => m.JobPostingComponent),
+          },
+          {
+            path: 'jobs/:id/applications',
+            loadComponent: () =>
+              import(
+                './pages/dashboard/employer-dashboard/job-applications/job-applications.component'
+              ).then((m) => m.JobApplicationsComponent),
           },
         ],
       },

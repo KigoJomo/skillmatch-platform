@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { AuthRoutes } from './routes/auth.route';
 import { ProfileRoutes } from './routes/profile.route';
 import { DashboardRoutes } from './routes/dashboard.route';
+import { JobRoutes } from './routes/job.route';
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', AuthRoutes);
 app.use('/api/profile', ProfileRoutes);
 app.use('/api/dashboard', DashboardRoutes);
+app.use('/api/jobs', JobRoutes)
 
 // Error handling middleware
 app.use(

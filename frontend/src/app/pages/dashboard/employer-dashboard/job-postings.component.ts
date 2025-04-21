@@ -1,20 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
-import { RouterLink } from '@angular/router';
-
-interface JobPosting {
-  id: string;
-  title: string;
-  department: string;
-  location: string;
-  type: string;
-  status: string;
-  applicantCount: number;
-  postedDate: string;
-  requiredSkills: string[];
-}
+import { JobService } from '../../../shared/services/job.service';
+import { Job } from '../../../shared/interfaces/dashboard.interface';
 
 @Component({
   selector: 'app-job-postings',
@@ -49,7 +39,7 @@ interface JobPosting {
                   <span>•</span>
                   <span>{{ job.location }}</span>
                   <span>•</span>
-                  <span>{{ job.type }}</span>
+                  <span>{{ job.employmentType }}</span>
                 </div>
               </div>
               <div class="flex items-center gap-4">
@@ -59,7 +49,18 @@ interface JobPosting {
                 >
                   {{ job.status }}
                 </span>
-                <app-button size="sm" variant="secondary">Edit</app-button>
+                <button
+                  class="px-3 py-1 text-sm rounded-md bg-background-light/50 hover:bg-background-light"
+                  (click)="updateStatus(job)"
+                >
+                  {{ job.status === 'draft' ? 'Publish' : 'Close' }}
+                </button>
+                <app-button
+                  size="sm"
+                  variant="secondary"
+                  [routerLink]="['/dashboard/employer/jobs', job.id]"
+                  >Edit</app-button
+                >
               </div>
             </div>
 
@@ -78,14 +79,35 @@ interface JobPosting {
               <div
                 class="flex items-center gap-6 text-sm text-foreground-light"
               >
-                <span>{{ job.applicantCount }} applicants</span>
-                <span>Posted {{ job.postedDate }}</span>
+                <a
+                  [routerLink]="[
+                    '/dashboard/employer/jobs',
+                    job.id,
+                    'applications'
+                  ]"
+                  class="hover:text-[var(--color-accent)]"
+                >
+                  {{ getApplicantText(job) }}
+                </a>
+                <span>Posted {{ formatDate(job.createdAt) }}</span>
               </div>
               <div class="flex gap-2">
-                <app-button size="sm" variant="secondary"
-                  >View Applicants</app-button
+                <app-button
+                  size="sm"
+                  variant="secondary"
+                  [routerLink]="[
+                    '/dashboard/employer/jobs',
+                    job.id,
+                    'applications'
+                  ]"
+                  >View Applications</app-button
                 >
-                <app-button size="sm" variant="secondary">Share</app-button>
+                <button
+                  class="px-3 py-1 text-sm rounded-md bg-background-light/50 hover:bg-background-light"
+                  (click)="shareJob(job)"
+                >
+                  Share
+                </button>
               </div>
             </div>
           </div>
@@ -95,47 +117,28 @@ interface JobPosting {
     </app-dashboard-layout>
   `,
 })
-export class JobPostingsComponent {
-  jobPostings: JobPosting[] = [
-    {
-      id: '1',
-      title: 'Senior Frontend Developer',
-      department: 'Engineering',
-      location: 'Remote',
-      type: 'Full-time',
-      status: 'active',
-      applicantCount: 12,
-      postedDate: '2 days ago',
-      requiredSkills: ['Angular', 'TypeScript', 'TailwindCSS', 'RxJS'],
-    },
-    {
-      id: '2',
-      title: 'Full Stack Engineer',
-      department: 'Engineering',
-      location: 'Hybrid',
-      type: 'Full-time',
-      status: 'draft',
-      applicantCount: 0,
-      postedDate: 'Not posted',
-      requiredSkills: ['Node.js', 'Angular', 'PostgreSQL', 'Docker'],
-    },
-    {
-      id: '3',
-      title: 'UI/UX Designer',
-      department: 'Design',
-      location: 'On-site',
-      type: 'Contract',
-      status: 'closed',
-      applicantCount: 24,
-      postedDate: '1 month ago',
-      requiredSkills: [
-        'Figma',
-        'User Research',
-        'Prototyping',
-        'Design Systems',
-      ],
-    },
-  ];
+export class JobPostingsComponent implements OnInit {
+  jobPostings: Job[] = [];
+  isLoading = false;
+
+  constructor(private jobService: JobService) {}
+
+  ngOnInit() {
+    this.loadJobPostings();
+  }
+
+  private async loadJobPostings() {
+    try {
+      this.isLoading = true;
+      const jobs = await this.jobService.getRecruiterJobs().toPromise();
+      this.jobPostings = jobs || [];
+    } catch (error) {
+      console.error('Error loading job postings:', error);
+      alert('Failed to load job postings. Please try again.');
+    } finally {
+      this.isLoading = false;
+    }
+  }
 
   getStatusClasses(status: string): string {
     switch (status) {
@@ -148,5 +151,49 @@ export class JobPostingsComponent {
       default:
         return 'bg-background-light text-foreground-light';
     }
+  }
+
+  async updateStatus(job: Job) {
+    try {
+      const newStatus = job.status === 'draft' ? 'active' : 'closed';
+      await this.jobService.updateJobStatus(job.id, newStatus).toPromise();
+      // Refresh the job list
+      await this.loadJobPostings();
+    } catch (error) {
+      console.error('Error updating job status:', error);
+      alert('Failed to update job status. Please try again.');
+    }
+  }
+
+  getApplicantText(job: Job): string {
+    const count = job.applications?.length || 0;
+    return `${count} ${count === 1 ? 'applicant' : 'applicants'}`;
+  }
+
+  formatDate(date: string | Date): string {
+    const d = new Date(date);
+    const now = new Date();
+    const diff = now.getTime() - d.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days} days ago`;
+    if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+    return d.toLocaleDateString();
+  }
+
+  shareJob(job: Job) {
+    // Implementation for sharing job posting (e.g., copy link, social share)
+    const url = `${window.location.origin}/jobs/${job.id}`;
+    navigator.clipboard.writeText(url).then(
+      () => {
+        alert('Job posting link copied to clipboard!');
+      },
+      (err) => {
+        console.error('Could not copy text: ', err);
+        alert('Failed to copy job posting link.');
+      }
+    );
   }
 }

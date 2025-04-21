@@ -1,16 +1,19 @@
-import { Router } from 'express';
+import express from 'express';
 import { authMiddleware } from '../middleware/auth.middleware';
-import { DashbboardController } from '../controllers/dashboard.controller';
+import { DashboardController } from '../controllers/dashboard.controller';
 
-const router = Router();
-const seekerRouter = Router();
+const router = express.Router();
 
+// All routes require authentication
 router.use(authMiddleware);
 
-seekerRouter.get('/', DashbboardController.getJobSeekerDashboard);
-seekerRouter.get('/jobs', DashbboardController.getAvailableJobs);
-seekerRouter.get('/applications', DashbboardController.getSeekerApplications);
+// Job seeker routes
+router.get('/seeker', DashboardController.getJobSeekerDashboard);
+router.get('/available-jobs', DashboardController.getAvailableJobs);
+router.get('/applications', DashboardController.getSeekerApplications);
 
-router.use('/seeker', seekerRouter);
+// Employer routes
+router.get('/employer', DashboardController.getEmployerDashboard);
+router.get('/employer/analytics', DashboardController.getEmployerAnalytics);
 
 export { router as DashboardRoutes };
