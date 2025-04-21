@@ -1,8 +1,11 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
-import { InputComponent } from '../../../shared/ui/input/input.component';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { OnInit } from '@angular/core';
+import { DashboardService } from '../../../shared/services/dashboard.service';
+import { JobListing } from '../../../shared/interfaces/dashboard.interface';
 
 @Component({
   selector: 'app-jobs',
@@ -27,7 +30,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
                 <span>•</span>
                 <span>{{ job.location }}</span>
                 <span>•</span>
-                <span>{{ job.type }}</span>
+                <span>{{ job.matchPercentage }} % match.</span>
               </div>
             </div>
             <div class="flex items-center gap-2">
@@ -51,49 +54,46 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
     </div>
   `,
 })
-export class JobsComponent {
+export class JobsComponent implements OnInit {
   searchControl = new FormControl('');
+  jobs: JobListing[] = [];
 
-  searchJobs() {
-    // TODO: Implement search functionality
-    console.log('Searching for:', this.searchControl.value);
+  constructor(
+    private http: HttpClient,
+    private dashboardService: DashboardService
+  ) {}
+
+  ngOnInit() {
+    this.loadJobsData();
   }
 
-  jobs = [
-    {
-      id: 1,
-      title: 'Senior Frontend Developer',
-      company: 'TechCorp',
-      location: 'Remote',
-      type: 'Full-time',
-      matchPercentage: 95,
-      description:
-        'We are seeking an experienced frontend developer to join our dynamic team...',
-      requiredSkills: ['Angular', 'TypeScript', 'TailwindCSS', 'RxJS'],
-    },
-    {
-      id: 2,
-      title: 'Full Stack Engineer',
-      company: 'InnovateSoft',
-      location: 'New York, NY',
-      type: 'Full-time',
-      matchPercentage: 88,
-      description:
-        'Looking for a full stack developer with strong experience in modern web technologies...',
-      requiredSkills: ['Node.js', 'Angular', 'PostgreSQL', 'Docker'],
-    },
-    {
-      id: 3,
-      title: 'UI/UX Developer',
-      company: 'DesignHub',
-      location: 'Remote',
-      type: 'Contract',
-      matchPercentage: 85,
-      description:
-        'Join our creative team to build beautiful and intuitive user interfaces...',
-      requiredSkills: ['Angular', 'SCSS', 'Figma', 'User Testing'],
-    },
-  ];
+  private loadJobsData() {
+    this.dashboardService.getAvailableJobs().subscribe({
+      next: (data) => {
+        this.jobs = data
+      },
+      error: (error) => {
+        console.error('Error loading jobs data: ', error);
+      },
+    })
+  }
+
+  searchJobs() {
+    const searchTerm = this.searchControl.value?.toLowerCase();
+    if (!searchTerm) {
+      this.loadJobsData();
+      return;
+    }
+
+    this.jobs = this.jobs.filter(
+      (job) =>
+        job.title.toLowerCase().includes(searchTerm) ||
+        job.description.toLowerCase().includes(searchTerm) ||
+        job.requiredSkills.some((skill) =>
+          skill.toLowerCase().includes(searchTerm)
+        )
+    );
+  }
 
   trackByJobId(index: number, job: any): number {
     return job.id;

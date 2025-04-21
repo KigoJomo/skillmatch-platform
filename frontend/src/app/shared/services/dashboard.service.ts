@@ -22,4 +22,12 @@ export class DashboardService {
   getProfileData(): Observable<any> {
     return this.http.get(`${this.apiUrl}/profile`);
   }
+
+  getAvailableJobs(): Observable<any>{
+    return this.http.get(`${this.apiUrl}/dashboard/seeker/jobs`)
+  }
+
+  getSeekerApplications(): Observable<any>{
+    return this.http.get(`${this.apiUrl}/dashboard/seeker/applications`)
+  }
 }

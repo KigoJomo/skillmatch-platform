@@ -3,6 +3,11 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.component';
 import { DashboardService } from '../../../shared/services/dashboard.service';
+import {
+  DashboardData,
+  Profile,
+} from '../../../shared/interfaces/dashboard.interface';
+import { AuthService } from '../../../shared/services/auth.service';
 
 @Component({
   selector: 'app-seeker-dashboard',
@@ -31,61 +36,49 @@ import { DashboardService } from '../../../shared/services/dashboard.service';
                   class="w-24 h-24 rounded-full object-cover z-10"
                 />
               </div>
-              <h3 class="font-semibold">{{profileData.firstName}}</h3>
+              <h3 class="font-semibold">
+                {{ profileData?.firstName }} {{ profileData?.lastName }}
+              </h3>
               <div
                 class="flex items-center gap-4 text-sm text-foreground-light mt-1"
               >
-                <span>{{profileData.email}}</span>
+                <span>{{ authService.currentUser?.email }}</span>
               </div>
             </div>
           </div>
+
           <div class="px-6 mt-8">
             <h4 class="mb-4">Application Status Overview</h4>
             <!-- Application Status Cards -->
+
             <div class="grid grid-cols-4 gap-4 mb-8">
+              @for (card of dataCards; track card.title) {
               <div
-                class="p-4 rounded-2xl bg-background-light/20 border-2 border-foreground-light/30 text-center"
+                class="px-4 py-6 rounded-2xl bg-background-light/20 border-2 border-foreground-light/30 text-center"
               >
-                <div class="flex justify-between items-center mb-1">
-                  <h5 class="text-sm text-foreground-light">Applied</h5>
-                  <button class="text-foreground-light/60">...</button>
+                <div class="flex justify-between items-center mb-2">
+                  <p class="text-sm capitalize text-foreground-light">
+                    {{ card.title }}
+                  </p>
                 </div>
-                <p class="text-2xl !text-accent font-semibold">15</p>
-                <p class="text-xs text-foreground-light">+23%</p>
-              </div>
-              <div
-                class="p-4 rounded-2xl bg-background-light/20 border-2 border-foreground-light/30 text-center"
-              >
-                <div class="flex justify-between items-center mb-1">
-                  <h5 class="text-sm text-foreground-light">
-                    Interview Scheduled
-                  </h5>
-                  <button class="text-foreground-light/60">...</button>
+                @if (!card.applications) {
+                <p class="text-5xl !text-accent font-semibold">
+                  {{ card.value || 0 }}
+                </p>
+                } @else {
+                <div class="text-sm">
+                  @for (app of card.applications; track app.job) {
+                  <div class="flex justify-between">
+                    <span>{{ app.job }}</span>
+                    <span>{{ app.status }}</span>
+                  </div>
+                  }
                 </div>
-                <p class="text-2xl !text-accent font-semibold">3</p>
-                <p class="text-xs text-foreground-light">+7%</p>
+                }
               </div>
-              <div
-                class="p-4 rounded-2xl bg-background-light/20 border-2 border-foreground-light/30 text-center"
-              >
-                <div class="flex justify-between items-center mb-1">
-                  <h5 class="text-sm text-foreground-light">Offers</h5>
-                  <button class="text-foreground-light/60">...</button>
-                </div>
-                <p class="text-2xl !text-accent font-semibold">1</p>
-                <p class="text-xs text-foreground-light">+0%</p>
-              </div>
-              <div
-                class="p-4 rounded-2xl bg-background-light/20 border-2 border-foreground-light/30 text-center"
-              >
-                <div class="flex justify-between items-center mb-1">
-                  <h5 class="text-sm text-foreground-light">Rejected</h5>
-                  <button class="text-foreground-light/60">...</button>
-                </div>
-                <p class="text-2xl !text-accent font-semibold">6</p>
-                <p class="text-xs text-foreground-light">+2%</p>
-              </div>
+              }
             </div>
+
             <h3 class="text-lg mb-3">Skills Development Progress</h3>
             <!-- Skills Development and Certifications Cards -->
             <div class="grid grid-cols-2 gap-6">
@@ -183,18 +176,41 @@ import { DashboardService } from '../../../shared/services/dashboard.service';
   ],
 })
 export class SeekerDashboardComponent implements OnInit {
-  profileData: any;
-  dashboardData: any;
+  profileData: Profile | null = null;
+  dashboardData: DashboardData | null = null;
 
-  constructor(private dashboardService: DashboardService) {}
+  constructor(
+    private dashboardService: DashboardService,
+    public authService: AuthService
+  ) {}
 
   ngOnInit(): void {
     this.loadDashboardData();
     this.loadProfileData();
   }
 
+  dataCards = [
+    {
+      title: 'job matches',
+      value: this.dashboardData?.matchCount,
+    },
+    {
+      title: 'applied',
+      value: this.dashboardData?.applicationCount,
+    },
+    {
+      title: 'rejected',
+      value: this.dashboardData?.rejectedCount,
+    },
+    {
+      title: 'recent activity',
+      applications: this.dashboardData?.recentActivity.map((application) => {
+        return { job: application.job.title, status: application.status };
+      }),
+    },
+  ];
+
   private loadDashboardData() {
-    // TODO: Mak this dynamic => role-based
     this.dashboardService.getJobSeekerDashData().subscribe({
       next: (data) => {
         this.dashboardData = data;

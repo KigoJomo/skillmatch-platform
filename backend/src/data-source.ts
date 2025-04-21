@@ -6,7 +6,10 @@ import { Profile } from './entities/Profile';
 import { ChatSession } from './entities/ChatSession';
 import { AuthSession } from './entities/AuthSession';
 import { Application } from './entities/Application';
-import "dotenv/config"
+import 'dotenv/config';
+import { Job } from './entities/Job';
+import { JobApplication } from './entities/JobApplication';
+import { JobMatch } from './entities/JobMatch';
 
 const database_url = process.env.DATABASE_URL!;
 
@@ -15,7 +18,16 @@ export const AppDataSource = new DataSource({
   url: database_url,
   synchronize: false,
   logging: false,
-  entities: [User, Profile, ChatSession, AuthSession, Application],
+  entities: [
+    Application,
+    AuthSession,
+    ChatSession,
+    Job,
+    JobApplication,
+    JobMatch,
+    Profile,
+    User,
+  ],
   migrations: ['src/migrations/*.ts'],
-  migrationsTableName: 'migrations'
+  migrationsTableName: 'migrations',
 });
