@@ -3,72 +3,66 @@ name: Deploy Skillmatch to AWS EC2
 on:
   push:
     branches:
-      - main # Trigger deployment only on pushes to the main branch
+      - main
 
 jobs:
   build-and-push:
     name: Build and Push Docker Images
-    runs-on: ubuntu-latest # Use a standard GitHub Actions runner
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3 # Action to get code
+        uses: actions/checkout@v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2 # Action to set up Docker build environment
+        uses: docker/setup-buildx-action@v2
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }} # Use secret for username
-          password: ${{ secrets.DOCKERHUB_TOKEN }} # Use secret for token
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push Frontend image
         uses: docker/build-push-action@v4
         with:
-          context: ./frontend # Path to frontend Dockerfile context
-          file: ./frontend/Dockerfile # Path to frontend Dockerfile
-          push: true # Push the image after building
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
           tags: kigojomo/skillmatch-frontend:latest
 
       - name: Build and push Backend image
         uses: docker/build-push-action@v4
         with:
-          context: ./backend # Path to backend Dockerfile context
-          file: ./backend/Dockerfile # Path to backend Dockerfile
-          push: true # Push the image after building
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
           tags: kigojomo/skillmatch-backend:latest
 
   deploy:
     name: Deploy to EC2 Instance
     runs-on: ubuntu-latest
-    needs: build-and-push # Run this job only after build-and-push succeeds
+    needs: build-and-push
 
     steps:
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@master # Action to run commands over SSH
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
-          script: | # Commands to run on the EC2 instance
-            # Create a Docker network if it doesn't exist.
+          script: |
             docker network create skillmatch-network || true
 
-            # Pull the latest images from Docker Hub
             docker pull kigojomo/skillmatch-frontend:latest
             docker pull kigojomo/skillmatch-backend:latest
 
-            # Stop and remove existing containers (if they exist) - || true ignores errors if they don't exist
             docker stop skillmatch-frontend || true
             docker rm skillmatch-frontend || true
             docker stop skillmatch-backend || true
             docker rm skillmatch-backend || true
 
-            # --- START: Create backend environment file ---
             echo "Creating backend .env file..."
-            # Create or overwrite the backend environment file
-            # Use GitHub Secrets to populate the file securely
             cat << 'EOF' > backend.env
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
@@ -81,11 +75,8 @@ jobs:
             chmod 600 backend.env
             echo "Backend .env file created."
 
-            # Run the new frontend container
             docker run -d --name skillmatch-frontend -p 80:80 --network skillmatch-network kigojomo/skillmatch-frontend:latest
 
-            # Run the new backend container
             docker run -d --name skillmatch-backend -p 3000:3000 --network skillmatch-network --env-file ./backend.env kigojomo/skillmatch-backend:latest
 
-            # Optional: Clean up old unused Docker images to save space
             docker image prune -af
