@@ -71,7 +71,7 @@ jobs:
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             TOKEN_EXPIRY=${{ secrets.TOKEN_EXPIRY }}
             CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
-            PORT=${{ secrets.PORT:-3000 }}
+            PORT=${{ secrets.PORT }}
             NODE_ENV=production
             EOF
 
