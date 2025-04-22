@@ -75,8 +75,11 @@ jobs:
             chmod 600 backend.env
             echo "Backend .env file created."
 
-            docker run -d --name skillmatch-frontend -p 80:80 --network skillmatch-network kigojomo/skillmatch-frontend:latest
-
             docker run -d --name skillmatch-backend -p 3000:3000 --network skillmatch-network --env-file ./backend.env kigojomo/skillmatch-backend:latest
+
+            echo "Waiting for backend to settle on the network..."
+            sleep 15
+
+            docker run -d --name skillmatch-frontend -p 80:80 --network skillmatch-network kigojomo/skillmatch-frontend:latest
 
             docker image prune -af
