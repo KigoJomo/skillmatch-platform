@@ -52,6 +52,9 @@ jobs:
           username: ${{ secrets.AWS_EC2_USER }}
           key: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
           script: | # Commands to run on the EC2 instance
+            # Create a Docker network if it doesn't exist.
+            docker network create skillmatch-network || true
+
             # Pull the latest images from Docker Hub
             docker pull kigojomo/skillmatch-frontend:latest
             docker pull kigojomo/skillmatch-backend:latest
@@ -79,10 +82,10 @@ jobs:
             echo "Backend .env file created."
 
             # Run the new frontend container
-            docker run -d --name skillmatch-frontend -p 80:80 kigojomo/skillmatch-frontend:latest
+            docker run -d --name skillmatch-frontend -p 80:80 --network skillmatch-network kigojomo/skillmatch-frontend:latest
 
             # Run the new backend container
-            docker run -d --name skillmatch-backend -p 3000:3000 kigojomo/skillmatch-backend:latest
+            docker run -d --name skillmatch-backend -p 3000:3000 --network skillmatch-network --env-file ./backend.env kigojomo/skillmatch-backend:latest
 
             # Optional: Clean up old unused Docker images to save space
             docker image prune -af
