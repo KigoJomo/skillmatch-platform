@@ -75,7 +75,23 @@ export interface DashboardData {
   matchCount: number;
   applicationCount: number;
   rejectedCount: number;
-  recentActivity: JobApplication[];
+  recentActivity: {
+    job: {
+      title: string;
+      requiredSkills: string[];
+    };
+    status: 'Pending' | 'Accepted' | 'Rejected';
+    appliedAt: string;
+  }[];
+}
+
+export interface DataCardInterface {
+  title: string;
+  value?: number | string;
+  applications?: Array<{
+    job: string;
+    status: 'Pending' | 'Accepted' | 'Rejected';
+  }>;
 }
 
 export interface Project {

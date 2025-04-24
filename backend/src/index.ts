@@ -7,21 +7,24 @@ import { AuthRoutes } from './routes/auth.route';
 import { ProfileRoutes } from './routes/profile.route';
 import { DashboardRoutes } from './routes/dashboard.route';
 import { JobRoutes } from './routes/job.route';
+import morgan from 'morgan';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT;
 
-const allowedOrigins = ['http://localhost:4200', 'http://13.51.238.17'];
+// const allowedOrigins = ['http://localhost:4200', 'http://13.51.238.17'];
+const CORS_ORIGIN = process.env.CORS_ORIGIN
 
 app.use(
   cors({
-    // origin: process.env.CORS_ORIGIN,
-    origin: allowedOrigins,
+    origin: CORS_ORIGIN,
+    // origin: allowedOrigins,
     credentials: true,
   })
 );
+app.use(morgan('combined'))
 app.use(express.json());
 
 app.get('/health', (req, res) => {

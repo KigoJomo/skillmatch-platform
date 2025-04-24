@@ -33,6 +33,7 @@ EXPOSE 3000
 
 # Set environment variables
 ENV NODE_ENV=production
+ENV CORS_ORIGIN='http://13.51.238.17'
 
 # Command to run the application
 CMD ["node", "dist/index.js"]

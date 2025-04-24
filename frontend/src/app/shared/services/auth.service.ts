@@ -144,7 +144,16 @@ export class AuthService {
   }
 
   shouldShowOnboarding(): boolean {
-    return this.currentUser ? !this.currentUser.onboardingCompleted : false;
+    let showOnboarding = true;
+    if (this.currentUser) {
+      if (this.currentUser.onboardingCompleted) {
+        showOnboarding = false;
+      } else {
+        showOnboarding = true;
+      }
+    }
+    return showOnboarding;
+    // return this.currentUser ? !this.currentUser.onboardingCompleted : false;
   }
 
   async logout() {

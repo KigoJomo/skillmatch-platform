@@ -34,15 +34,26 @@ export class DashboardController {
 
       const recentActivity = await jobApplicationRepository.find({
         where: { applicant: { id: userId } },
+        relations: ['job'],
         order: { appliedAt: 'DESC' },
         take: 5,
       });
+
+      // Transform recent activity to match the interface
+      const transformedActivity = recentActivity.map((activity) => ({
+        job: {
+          title: activity.job.title,
+          requiredSkills: activity.job.requiredSkills || [],
+        },
+        status: activity.status,
+        appliedAt: activity.appliedAt,
+      }));
 
       res.json({
         matchCount,
         applicationCount,
         rejectedCount,
-        recentActivity,
+        recentActivity: transformedActivity,
       });
     } catch (error) {
       console.error('Dashboard data error:', error);
@@ -279,11 +290,11 @@ export class DashboardController {
           appliedAt: true,
           updatedAt: true,
           job: {
-        // Include relation structure needed for the where clause
-        id: true,
-        recruiter: {
-          id: true,
-        },
+            // Include relation structure needed for the where clause
+            id: true,
+            recruiter: {
+              id: true,
+            },
           },
         },
       });

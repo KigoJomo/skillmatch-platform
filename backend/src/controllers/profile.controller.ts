@@ -103,7 +103,7 @@ export class ProfileController {
         return;
       }
 
-      user.onboardingCompleted = false;
+      user.onboardingCompleted = true;
       await userRepository.save(user);
 
       res.json({ message: 'Onboarding skipped' });

@@ -163,11 +163,11 @@ import { ThemeService, Theme } from '../../services/theme.service';
                 class="flex items-center gap-2 hover:text-[var(--color-accent)]"
               >
                 <div
-                  class="w-8 h-8 rounded-full bg-[var(--color-accent)] flex items-center justify-center text-background font-medium"
+                  class="w-8 h-8 rounded-full bg-[var(--color-accent)] capitalize flex items-center justify-center text-background font-medium"
                 >
                   {{ getInitial() }}
                 </div>
-                <span class="text-sm hidden md:inline">{{
+                <span class="text-sm hidden md:inline capitalize">{{
                   (authService.currentUser$ | async)?.firstName
                 }}</span>
               </a>
