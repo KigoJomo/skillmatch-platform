@@ -33,35 +33,16 @@ import {
       <div class="max-w-5xl mx-auto space-y-6">
         <!-- Profile Overview -->
         <div
-          class="p-6 rounded-xl bg-background-light/30 border border-foreground-light/20"
+          class="p-6 rounded-xl bg-background-light/30 border border-foreground-light/20 flex flex-col gap-6"
         >
           <div class="flex items-start justify-between mb-6">
             <div class="flex gap-4">
               <div class="relative">
-                <img
-                  [src]="profileImageUrl || '/images/profile-placeholder.jpeg'"
-                  alt="Profile"
-                  class="w-24 h-24 rounded-full object-cover"
-                />
-                <button
-                  type="button"
-                  (click)="uploadImage()"
-                  class="absolute bottom-0 right-0 p-2 rounded-full bg-[var(--color-accent)] text-background"
+                <div
+                  class="w-24 aspect-square rounded-full bg-[var(--color-accent)] capitalize flex items-center justify-center text-background-light/70 font-medium text-6xl"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                  </svg>
-                </button>
+                  {{ getInitial() }}
+                </div>
               </div>
               <div>
                 <h1 class="text-2xl font-medium">
@@ -87,12 +68,14 @@ import {
                   formControlName="firstName"
                   [error]="getErrorMessage('firstName')"
                   [readonly]="!isEditing"
+                  class="*:!capitalize"
                 ></app-input>
                 <app-input
                   label="Last Name"
                   formControlName="lastName"
                   [error]="getErrorMessage('lastName')"
                   [readonly]="!isEditing"
+                  class="*:!capitalize"
                 ></app-input>
                 <app-input
                   label="Phone"
@@ -881,5 +864,9 @@ export class ProfileComponent implements OnInit {
         ? 'seeker'
         : 'employer';
     this.router.navigate(['/dashboard', route, 'overview']);
+  }
+
+  getInitial(): string {
+    return this.authService.currentUser?.firstName?.charAt(0) ?? '';
   }
 }

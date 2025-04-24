@@ -73,6 +73,7 @@ export class DashboardController {
       // Get all jobs
       const jobs = await jobRepository.find({
         relations: ['recruiter', 'recruiter.profile'],
+        take: 10
       });
 
       // Calculate match percentage for each job

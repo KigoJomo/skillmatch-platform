@@ -42,7 +42,7 @@ type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'textarea';
                text-[var(--color-foreground)] placeholder-[var(--color-foreground-light)]/50
                focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]
                disabled:opacity-50 disabled:cursor-not-allowed
-               readonly:bg-background-light/50 readonly:cursor-default"
+               readonly:bg-background-light/50 readonly:cursor-default {{ class }}"
       />
       <textarea
         *ngIf="type === 'textarea'"
@@ -57,7 +57,7 @@ type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'textarea';
                text-[var(--color-foreground)] placeholder-[var(--color-foreground-light)]/50
                focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]
                disabled:opacity-50 disabled:cursor-not-allowed
-               readonly:bg-background-light/50 readonly:cursor-default"
+               readonly:bg-background-light/50 readonly:cursor-default {{ class }}"
       ></textarea>
       <span *ngIf="error" class="text-sm text-red-500">{{ error }}</span>
     </div>
@@ -66,6 +66,7 @@ type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'textarea';
 })
 export class InputComponent implements ControlValueAccessor {
   @Input() label = '';
+  @Input() class = '';
   @Input() type: InputType = 'text';
   @Input() placeholder = '';
   @Input() error?: string;

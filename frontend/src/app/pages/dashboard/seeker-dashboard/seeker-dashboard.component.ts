@@ -126,12 +126,12 @@ import { AuthService } from '../../../shared/services/auth.service';
                 <div
                   class="space-y-4 max-h-[280px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-foreground-light/10 hover:scrollbar-thumb-foreground-light/20"
                 >
-                  @for (skill of skillMatchData.skills; track skill) {
+                  @for (skill of skillMatchData.skills; track skill.name) {
                   <div>
                     <div class="flex justify-between text-sm mb-1.5">
-                      <span>{{ skill }}</span>
+                      <span>{{ skill.name }}</span>
                       <span class="text-foreground-light"
-                        >{{ skillMatchData.percentage }}%</span
+                        >{{ skill.percentage }}%</span
                       >
                     </div>
                     <div
@@ -139,7 +139,7 @@ import { AuthService } from '../../../shared/services/auth.service';
                     >
                       <div
                         class="h-full bg-[var(--color-accent)]"
-                        [style.width.%]="skillMatchData.percentage"
+                        [style.width.%]="skill.percentage"
                       ></div>
                     </div>
                   </div>
@@ -153,9 +153,6 @@ import { AuthService } from '../../../shared/services/auth.service';
               >
                 <div class="flex items-center justify-between mb-4">
                   <h4 class="font-medium">Suggested Skills</h4>
-                  <button class="text-sm text-[var(--color-accent)]">
-                    View All
-                  </button>
                 </div>
                 <div class="space-y-2">
                   <div class="p-3 rounded-lg bg-background-light/30">
@@ -188,7 +185,7 @@ import { AuthService } from '../../../shared/services/auth.service';
                   <h4 class="font-medium">Weekly Match Performance</h4>
                   <div class="flex items-center gap-2">
                     <span class="text-sm text-foreground-light"
-                      >Last 3 Weeks</span
+                      >Last 8 Weeks</span
                     >
                   </div>
                 </div>
@@ -239,7 +236,7 @@ export class SeekerDashboardComponent implements OnInit {
   dashboardData: DashboardData | null = null;
   skillMatchData: {
     percentage: number;
-    skills: string[];
+    skills: Array<{ name: string; percentage: number }>;
     growth: { week: number; value: number }[];
     suggestedSkills: string[];
   } = {
@@ -292,28 +289,55 @@ export class SeekerDashboardComponent implements OnInit {
   }
 
   private calculateSkillProgress() {
-    if (this.dashboardData && this.profileData?.skills) {
-      // Calculate skill match percentage based on matches vs total opportunities
+    if (this.dashboardData?.recentActivity && this.profileData?.skills) {
+      // Calculate overall skill match percentage
       const totalOpportunities =
         this.dashboardData.applicationCount + this.dashboardData.matchCount;
       const matchPercentage =
         (this.dashboardData.matchCount / Math.max(1, totalOpportunities)) * 100;
-      // Clamp between 0 and 100
       this.skillMatchData.percentage = Math.min(
         100,
         Math.max(0, Math.round(matchPercentage))
       );
-      this.skillMatchData.skills = this.profileData.skills;
 
-      // Rest of the existing code...
+      // Calculate individual skill match percentages
+      this.skillMatchData.skills = this.profileData.skills.map((skill) => {
+        // Count matches and total opportunities for this specific skill
+        const skillStats = this.dashboardData!.recentActivity.reduce(
+          (acc, activity) => {
+            // Check if the job has required skills and if this skill is required
+            if (activity.job?.requiredSkills?.includes(skill)) {
+              acc.total++;
+              if (activity.status === 'Accepted') {
+                acc.matches++;
+              }
+            }
+            return acc;
+          },
+          { matches: 0, total: 0 }
+        );
+
+        // Calculate percentage based on matches vs total applications where skill was required
+        const skillPercentage =
+          skillStats.total > 0
+            ? Math.round((skillStats.matches / skillStats.total) * 100)
+            : this.skillMatchData.percentage; // Use overall match rate if no specific data for skill
+
+        return {
+          name: skill,
+          percentage: skillPercentage,
+        };
+      });
+
+      // Calculate weekly performance for 2 months (8 weeks)
       const now = new Date();
-      const threeWeeksAgo = new Date(now.getTime() - 21 * 24 * 60 * 60 * 1000);
+      const twoMonthsAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
       // Group matches by week
       const weeklyMatches = this.dashboardData.recentActivity.reduce(
         (acc, activity) => {
           const activityDate = new Date(activity.appliedAt);
-          if (activityDate >= threeWeeksAgo) {
+          if (activityDate >= twoMonthsAgo) {
             const weekNumber = Math.floor(
               (now.getTime() - activityDate.getTime()) /
                 (7 * 24 * 60 * 60 * 1000)
@@ -326,10 +350,10 @@ export class SeekerDashboardComponent implements OnInit {
         {} as Record<number, number>
       );
 
-      // Convert to array format for chart
-      this.skillMatchData.growth = [0, 1, 2].map((week) => ({
-        week: week + 1,
-        value: weeklyMatches[week] || 0,
+      // Convert to array format for chart - show last 8 weeks
+      this.skillMatchData.growth = Array.from({ length: 8 }, (_, i) => ({
+        week: i + 1,
+        value: weeklyMatches[i] || 0,
       }));
 
       // Calculate suggested skills based on rejected applications
@@ -398,7 +422,7 @@ export class SeekerDashboardComponent implements OnInit {
       ...this.skillMatchData.growth.map((g) => g.value)
     );
     const points = this.skillMatchData.growth.map((g, i) => {
-      const x = (i / 2) * 300; // 3 points spread across width
+      const x = (i / 7) * 300; // 8 points spread across width
       const y = maxValue ? 100 - (g.value / maxValue) * 65 : 35;
       return `${i === 0 ? 'M' : 'L'} ${x},${y}`;
     });

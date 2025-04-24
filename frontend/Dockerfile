@@ -15,7 +15,7 @@ RUN npm ci
 COPY . .
 
 # Build the application in production mode
-RUN ng build --prod
+RUN ng build --configuration=production
 
 # Production stage with Nginx
 FROM nginx:stable-alpine
