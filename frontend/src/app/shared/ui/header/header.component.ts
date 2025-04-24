@@ -86,12 +86,12 @@ import { ThemeService, Theme } from '../../services/theme.service';
                   class="hover:text-[var(--color-accent)]"
                   >Candidates</a
                 >
-                <a
+                <!-- <a
                   routerLink="/dashboard/employer/ai-chat"
                   routerLinkActive="text-[var(--color-accent)]"
                   class="hover:text-[var(--color-accent)]"
                   >AI Chat</a
-                >
+                > -->
               </ng-template>
             </ng-template>
           </nav>

@@ -43,18 +43,17 @@ import { LoaderComponent } from '../../../shared/ui/loader/loader.component';
           class="p-6 rounded-xl bg-background-light/30 border border-foreground-light/20 flex flex-col gap-6"
         >
           <div class="flex items-start justify-between mb-6">
-            <div class="flex gap-4">
-              <div class="relative">
-                <div
-                  class="w-24 aspect-square rounded-full bg-[var(--color-accent)] capitalize flex items-center justify-center text-background-light/70 font-medium text-6xl"
-                >
-                  {{ getInitial() }}
-                </div>
+            <div class="flex items-center gap-4">
+              <div
+                class="w-24 aspect-square rounded-full bg-[var(--color-accent)] capitalize flex items-center justify-center text-background-light/70 font-medium text-6xl"
+              >
+                {{ getInitial() }}
               </div>
+
               <div>
-                <h1 class="text-2xl font-medium">
+                <h3 class="font-medium">
                   {{ this.authService.currentUser?.firstName }}
-                </h1>
+                </h3>
               </div>
             </div>
             <app-button variant="secondary" (click)="toggleEdit()">{{

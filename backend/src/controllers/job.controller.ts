@@ -263,23 +263,43 @@ export class JobController {
 
       const applications = await applicationRepository.find({
         where: { job: { id, recruiter: { id: recruiterId } } },
-        relations: ['applicant', 'applicant.profile'],
+        relations: ['applicant', 'applicant.profile', 'job'],
         order: { appliedAt: 'DESC' },
       });
 
-      const formattedApplications = applications.map((app) => ({
-        id: app.id,
-        applicant: {
-          id: app.applicant.id,
-          name: `${app.applicant.profile.firstName} ${app.applicant.profile.lastName}`,
-          email: app.applicant.email,
-          skills: app.applicant.profile.skills,
-          experience: app.applicant.profile.experienceLevel,
-        },
-        coverLetter: app.coverLetter,
-        status: app.status,
-        appliedAt: app.appliedAt,
-      }));
+      console.log(
+        'Raw applications from DB:',
+        applications.map((app) => ({
+          id: app.id,
+          matchPercentage: app.matchPercentage,
+        }))
+      );
+
+      const formattedApplications = applications.map((app) => {
+        const formatted = {
+          id: app.id,
+          applicant: {
+            id: app.applicant.id,
+            profile: app.applicant.profile,
+            email: app.applicant.email,
+          },
+          job: {
+            id: app.job.id,
+            title: app.job.title,
+            requiredSkills: app.job.requiredSkills,
+          },
+          coverLetter: app.coverLetter,
+          status: app.status,
+          appliedAt: app.appliedAt,
+          matchPercentage: app.matchPercentage,
+        };
+        console.log(
+          'Formatted application:',
+          app.id,
+          formatted.matchPercentage
+        );
+        return formatted;
+      });
 
       res.json(formattedApplications);
     } catch (error) {

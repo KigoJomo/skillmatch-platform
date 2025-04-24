@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { Job, JobListing } from '../interfaces/dashboard.interface';
 
@@ -17,7 +18,16 @@ export class JobService {
   }
 
   getRecruiterJobs(): Observable<Job[]> {
-    return this.http.get<Job[]>(`${this.apiUrl}/jobs/recruiter`);
+    console.log('Fetching recruiter jobs...');
+    return this.http.get<Job[]>(`${this.apiUrl}/jobs/recruiter`).pipe(
+      tap((jobs) => {
+        console.log('Received recruiter jobs:', jobs?.length || 0);
+      }),
+      catchError((error) => {
+        console.error('Error fetching recruiter jobs:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   getJobDetails(jobId: string): Observable<Job> {
@@ -42,7 +52,21 @@ export class JobService {
   }
 
   getJobApplications(jobId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/jobs/${jobId}/applications`);
+    console.log(`Fetching applications for job ${jobId}...`);
+    return this.http
+      .get<any[]>(`${this.apiUrl}/jobs/${jobId}/applications`)
+      .pipe(
+        tap((applications) => {
+          console.log(
+            `Received applications for job ${jobId}:`,
+            applications?.length || 0
+          );
+        }),
+        catchError((error) => {
+          console.error(`Error fetching applications for job ${jobId}:`, error);
+          return throwError(() => error);
+        })
+      );
   }
 
   updateApplicationStatus(
