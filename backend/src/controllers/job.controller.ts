@@ -16,7 +16,7 @@ export class JobController {
       const recruiterId = req.user?.id;
       if (!recruiterId) {
         res.status(401).json({ error: 'Unauthorized' });
-        return
+        return;
       }
 
       const recruiter = await userRepository.findOne({
@@ -26,7 +26,7 @@ export class JobController {
         res
           .status(403)
           .json({ error: 'Only recruiters can create job postings' });
-        return
+        return;
       }
 
       const jobData = { ...req.body, recruiter };
@@ -46,7 +46,7 @@ export class JobController {
       const recruiterId = req.user?.id;
       if (!recruiterId) {
         res.status(401).json({ error: 'Unauthorized' });
-        return
+        return;
       }
 
       const jobs = await jobRepository.find({
@@ -85,7 +85,7 @@ export class JobController {
 
       if (!job) {
         res.status(404).json({ error: 'Job not found' });
-        return
+        return;
       }
 
       res.json(job);
@@ -107,7 +107,7 @@ export class JobController {
 
       if (!job) {
         res.status(404).json({ error: 'Job not found' });
-        return
+        return;
       }
 
       const updatedJob = await jobRepository.save({
@@ -135,7 +135,7 @@ export class JobController {
 
       if (!job) {
         res.status(404).json({ error: 'Job not found' });
-        return
+        return;
       }
 
       await jobRepository.remove(job);
@@ -159,12 +159,12 @@ export class JobController {
 
       if (!job) {
         res.status(404).json({ error: 'Job not found' });
-        return
+        return;
       }
 
       if (!['draft', 'active', 'closed'].includes(status)) {
         res.status(400).json({ error: 'Invalid status' });
-        return
+        return;
       }
 
       job.status = status;
@@ -174,6 +174,84 @@ export class JobController {
     } catch (error) {
       console.error('Update job status error:', error);
       res.status(500).json({ error: 'Failed to update job status' });
+    }
+  }
+
+  // Apply for a job
+  static async applyForJob(req: AuthRequest, res: Response) {
+    try {
+      const { id } = req.params;
+      const { coverLetter } = req.body;
+      const userId = req.user?.id;
+
+      const job = await jobRepository.findOne({
+        where: { id },
+      });
+
+      if (!job) {
+        res.status(404).json({ error: 'Job not found' });
+        return;
+      }
+
+      const applicant = await userRepository.findOne({
+        where: { id: userId },
+        relations: ['profile'],
+      });
+
+      if (!applicant) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      // Helper function to ensure we have an array of skills
+      const ensureSkillsArray = (
+        skills: string | string[] | undefined
+      ): string[] => {
+        if (!skills) return [];
+        if (typeof skills === 'string')
+          return skills.split(',').map((s) => s.trim());
+        return skills;
+      };
+
+      // Helper function to normalize skills
+      const normalizeSkill = (skill: string): string => {
+        return skill
+          .toLowerCase()
+          .trim()
+          .replace(/[-_. ]+/g, ' ');
+      };
+
+      // Calculate match percentage
+      let matchPercentage = 0;
+      if (applicant.profile?.skills && job.requiredSkills) {
+        const normalizedUserSkills = ensureSkillsArray(
+          applicant.profile.skills
+        ).map(normalizeSkill);
+        const normalizedJobSkills = ensureSkillsArray(job.requiredSkills).map(
+          normalizeSkill
+        );
+
+        const matchingSkills = normalizedJobSkills.filter((jobSkill) =>
+          normalizedUserSkills.some((userSkill) => userSkill === jobSkill)
+        );
+        matchPercentage = Math.round(
+          (matchingSkills.length / normalizedJobSkills.length) * 100
+        );
+      }
+
+      const application = applicationRepository.create({
+        applicant,
+        job,
+        coverLetter,
+        matchPercentage,
+        status: 'Pending',
+      });
+
+      await applicationRepository.save(application);
+      res.status(201).json(application);
+    } catch (error) {
+      console.error('Apply for job error:', error);
+      res.status(500).json({ error: 'Failed to apply for job' });
     }
   }
 
@@ -227,12 +305,12 @@ export class JobController {
 
       if (!application) {
         res.status(404).json({ error: 'Application not found' });
-        return
+        return;
       }
 
       if (!['Pending', 'Accepted', 'Rejected'].includes(status)) {
         res.status(400).json({ error: 'Invalid status' });
-        return
+        return;
       }
 
       application.status = status;

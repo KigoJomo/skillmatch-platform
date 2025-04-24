@@ -11,6 +11,7 @@ import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { InputComponent } from '../../../shared/ui/input/input.component';
 import { LogoComponent } from '../../../shared/ui/logo/logo.component';
 import { AuthService } from '../../../shared/services/auth.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-login',
@@ -30,6 +31,7 @@ export class LoginComponent {
   loginForm: FormGroup;
   isLoading = false;
   error: string | null = null;
+  formSubmitted = false;
 
   constructor(
     private fb: FormBuilder,
@@ -45,7 +47,10 @@ export class LoginComponent {
 
   getErrorMessage(field: string): string | undefined {
     const control = this.loginForm.get(field);
-    if (!control) return undefined;
+    // Only show errors if the field has been touched or the form was submitted
+    if (!control || (!control.touched && !this.formSubmitted)) {
+      return undefined;
+    }
 
     if (control.hasError('required')) {
       return `${field.charAt(0).toUpperCase() + field.slice(1)} is required`;
@@ -61,7 +66,9 @@ export class LoginComponent {
 
   private async navigateToDashboard() {
     if (this.authService.shouldShowOnboarding()) {
-      console.log(`>>>>>> Onboarding: ${this.authService.currentUser?.onboardingCompleted}`)
+      console.log(
+        `>>>>>> Onboarding: ${this.authService.currentUser?.onboardingCompleted}`
+      );
       await this.router.navigate(['/onboarding']);
       return;
     }
@@ -74,6 +81,8 @@ export class LoginComponent {
   }
 
   async onSubmit() {
+    this.formSubmitted = true;
+
     if (this.loginForm.invalid) {
       Object.keys(this.loginForm.controls).forEach((key) => {
         const control = this.loginForm.get(key);
@@ -94,11 +103,40 @@ export class LoginComponent {
       );
       await this.navigateToDashboard();
     } catch (error: any) {
-      if (error?.status === 400) {
-        this.error = 'Invalid email or password';
+      if (error instanceof HttpErrorResponse) {
+        switch (error.status) {
+          case 400:
+            this.error = 'Invalid email or password';
+            break;
+          case 401:
+            this.error = 'Unauthorized access. Please check your credentials.';
+            break;
+          case 403:
+            this.error =
+              'Your account has been suspended. Please contact support.';
+            break;
+          case 404:
+            this.error =
+              'Account not found. Please check your email or register.';
+            break;
+          case 429:
+            this.error = 'Too many login attempts. Please try again later.';
+            break;
+          case 0:
+            this.error =
+              'Unable to connect to the server. Please check your internet connection.';
+            break;
+          default:
+            this.error =
+              error.error?.message ||
+              'An error occurred. Please try again later.';
+        }
       } else {
-        this.error = 'An error occurred. Please try again later.';
+        this.error =
+          error.message || 'An error occurred. Please try again later.';
       }
+
+      console.error('Login error:', error);
     } finally {
       this.isLoading = false;
     }

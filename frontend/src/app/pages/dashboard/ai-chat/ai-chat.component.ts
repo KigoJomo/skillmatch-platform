@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { InputComponent } from '../../../shared/ui/input/input.component';
+import { LoaderComponent } from '../../../shared/ui/loader/loader.component';
 
 interface ChatContact {
   id: string;
@@ -21,7 +22,7 @@ interface ChatMessage {
 @Component({
   selector: 'app-ai-chat',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, LoaderComponent],
   template: `
     <div class="h-screen bg-background">
       <div class="flex h-full">
@@ -58,6 +59,43 @@ interface ChatMessage {
                 recruitment insights
               </p>
             </div>
+            <div class="space-y-4 mb-6">
+              <div
+                *ngFor="let message of messages; trackBy: trackByMessageId"
+                [class]="
+                  'p-4 rounded-xl ' +
+                  (message.sender === 'user'
+                    ? 'bg-[var(--color-accent)]/10 ml-12'
+                    : 'bg-background-light/30 mr-12')
+                "
+              >
+                <div class="flex gap-4">
+                  <div
+                    class="w-8 h-8 rounded-full bg-background-light/30 flex items-center justify-center shrink-0"
+                  >
+                    {{ message.sender === 'user' ? '👤' : '🤖' }}
+                  </div>
+                  <div class="space-y-2">
+                    <p>{{ message.content }}</p>
+                    <div
+                      *ngIf="message.suggestions?.length"
+                      class="flex flex-wrap gap-2 mt-2"
+                    >
+                      <button
+                        *ngFor="let suggestion of message.suggestions"
+                        (click)="sendMessage(suggestion)"
+                        class="px-3 py-1 text-sm rounded-full bg-background-light/30 hover:bg-[var(--color-accent)]/10 transition-colors"
+                      >
+                        {{ suggestion }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="isLoading" class="flex justify-center">
+              <app-loader label="AI is thinking..." />
+            </div>
           </div>
 
           <!-- Input Area -->
@@ -67,10 +105,14 @@ interface ChatMessage {
                 type="text"
                 placeholder="Type your message..."
                 class="w-full bg-[#161B22] border border-[#30363D] rounded-lg pl-4 pr-24 py-3 focus:outline-none focus:border-[#2F81F7]"
+                [(ngModel)]="messageInput"
+                (keyup.enter)="sendMessage()"
               />
               <div class="absolute right-2 top-2 flex gap-1">
                 <button
                   class="p-1.5 text-[#8B949E] hover:text-[#E6EDF3] transition-colors"
+                  (click)="sendMessage()"
+                  [disabled]="!messageInput.trim() || isLoading"
                 >
                   <svg
                     width="20"
@@ -92,5 +134,46 @@ interface ChatMessage {
   `,
 })
 export class AIChatComponent {
- 
+  messages: Array<{
+    id: number;
+    content: string;
+    sender: 'user' | 'ai';
+    suggestions?: string[];
+  }> = [];
+  messageInput = '';
+  isLoading = false;
+
+  sendMessage(content?: string) {
+    if (!content && !this.messageInput.trim()) return;
+
+    const messageToSend = content || this.messageInput;
+    this.messages.push({
+      id: Date.now(),
+      content: messageToSend,
+      sender: 'user',
+    });
+
+    this.messageInput = '';
+    this.isLoading = true;
+
+    // Simulated AI response - replace with actual API call
+    setTimeout(() => {
+      this.messages.push({
+        id: Date.now(),
+        content:
+          'This is a simulated AI response. Replace with actual API integration.',
+        sender: 'ai',
+        suggestions: [
+          'Tell me about job opportunities',
+          'How can I improve my profile?',
+          'What skills are in demand?',
+        ],
+      });
+      this.isLoading = false;
+    }, 1500);
+  }
+
+  trackByMessageId(index: number, message: { id: number }) {
+    return message.id;
+  }
 }

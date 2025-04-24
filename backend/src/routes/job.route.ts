@@ -18,9 +18,10 @@ router.delete('/:id', JobController.deleteJob);
 router.patch('/:id/status', JobController.updateJobStatus);
 
 // Job applications management
+router.post('/:id/apply', JobController.applyForJob);
 router.get('/:id/applications', JobController.getJobApplications);
 router.patch(
   '/:jobId/applications/:applicationId/status',
   JobController.updateApplicationStatus
-)
+);
 export { router as JobRoutes };

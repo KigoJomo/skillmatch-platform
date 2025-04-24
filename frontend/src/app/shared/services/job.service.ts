@@ -55,4 +55,8 @@ export class JobService {
       { status }
     );
   }
+
+  applyForJob(jobId: string, data: { coverLetter: string }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/jobs/${jobId}/apply`, data);
+  }
 }

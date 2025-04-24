@@ -21,6 +21,7 @@
           <app-input label="First Name" formControlName="firstName" [error]="getErrorMessage('firstName')"></app-input>
           <app-input label="Last Name" formControlName="lastName" [error]="getErrorMessage('lastName')"></app-input>
         </div>
+        
         <div *ngIf="selectedRole !== 'Job Seeker'">
           <app-input label="Company Name" formControlName="firstName"
             [error]="getErrorMessage('firstName')"></app-input>

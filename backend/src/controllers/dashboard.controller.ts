@@ -68,27 +68,79 @@ export class DashboardController {
       // Get user profile with skills
       const userProfile = await profileRepository.findOne({
         where: { user: { id: userId } },
+        select: ['id', 'skills', 'experienceLevel'],
       });
 
       // Get all jobs
       const jobs = await jobRepository.find({
         relations: ['recruiter', 'recruiter.profile'],
-        take: 10
+        take: 50,
       });
+
+      // Helper function to normalize skills
+      const normalizeSkill = (skill: string): string => {
+        return skill
+          .toLowerCase()
+          .trim()
+          .replace(/[-_. ]+/g, ' ');
+      };
+
+      // Helper function to ensure we have an array of skills
+      const ensureSkillsArray = (
+        skills: string | string[] | undefined
+      ): string[] => {
+        if (!skills) return [];
+        if (typeof skills === 'string')
+          return skills.split(',').map((s) => s.trim());
+        return skills;
+      };
+
+      // Helper function to check if two skills are similar
+      const areSkillsSimilar = (skill1: string, skill2: string): boolean => {
+        // Exact match
+        if (skill1 === skill2) return true;
+
+        // Check if one contains the other (e.g., "JavaScript" contains "Java")
+        if (skill1.includes(skill2) || skill2.includes(skill1)) return true;
+
+        // Check for common prefixes (e.g., "React" and "ReactJS")
+        const minLength = Math.min(skill1.length, skill2.length);
+        if (
+          minLength >= 3 &&
+          skill1.substring(0, minLength) === skill2.substring(0, minLength)
+        )
+          return true;
+
+        return false;
+      };
 
       // Calculate match percentage for each job
       const jobsWithMatch = await Promise.all(
         jobs.map(async (job) => {
           let matchPercentage = 0;
           if (userProfile?.skills && job.requiredSkills) {
-            const matchingSkills = job.requiredSkills.filter((skill) =>
-              userProfile.skills?.includes(skill)
-            );
-            matchPercentage = Math.round(
-              (matchingSkills.length / job.requiredSkills.length) * 100
-            );
+            const normalizedUserSkills = ensureSkillsArray(
+              userProfile.skills
+            ).map(normalizeSkill);
+            const normalizedJobSkills = ensureSkillsArray(
+              job.requiredSkills
+            ).map(normalizeSkill);
 
-            // Create job match if above threshold and doesn't exist
+            // If job has no required skills, set match to 100%
+            if (normalizedJobSkills.length === 0) {
+              matchPercentage = 100;
+            } else {
+              const matchingSkills = normalizedJobSkills.filter((jobSkill) =>
+                normalizedUserSkills.some((userSkill) =>
+                  areSkillsSimilar(userSkill, jobSkill)
+                )
+              );
+              matchPercentage = Math.round(
+                (matchingSkills.length / normalizedJobSkills.length) * 100
+              );
+            }
+
+            // Create job match if above threshold
             if (matchPercentage >= 70) {
               try {
                 const existingMatch = await jobMatchRepository.findOne({

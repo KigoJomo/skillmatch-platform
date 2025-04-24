@@ -17,6 +17,7 @@ import {
   Profile,
   Project,
 } from '../../../shared/interfaces/dashboard.interface';
+import { LoaderComponent } from '../../../shared/ui/loader/loader.component';
 
 @Component({
   selector: 'app-profile',
@@ -27,9 +28,15 @@ import {
     DashboardLayoutComponent,
     ButtonComponent,
     InputComponent,
+    LoaderComponent,
   ],
   template: `
     <app-dashboard-layout>
+      @if (isLoading) {
+      <div class="flex items-center justify-center py-20">
+        <app-loader label="Loading profile..." />
+      </div>
+      } @else {
       <div class="max-w-5xl mx-auto space-y-6">
         <!-- Profile Overview -->
         <div
@@ -417,7 +424,15 @@ import {
             </form>
           </ng-container>
         </div>
+        @if (isSaving) {
+        <div
+          class="fixed inset-0 bg-background/50 flex items-center justify-center z-50"
+        >
+          <app-loader label="Saving changes..." />
+        </div>
+        }
       </div>
+      }
     </app-dashboard-layout>
   `,
 })
@@ -428,6 +443,7 @@ export class ProfileComponent implements OnInit {
   isEditingProjects = false;
   isSaving = false;
   isEditingCompany = false;
+  isLoading = false;
 
   skillInput = new FormControl('');
   skills: { name: string }[] = [];
@@ -480,6 +496,7 @@ export class ProfileComponent implements OnInit {
   }
 
   private loadProfileData() {
+    this.isLoading = true;
     this.dashboardService.getProfileData().subscribe({
       next: (profile) => {
         this.profile = profile;
@@ -518,9 +535,11 @@ export class ProfileComponent implements OnInit {
             });
           }
         }
+        this.isLoading = false;
       },
       error: (error) => {
         console.error('Error loading profile data:', error);
+        this.isLoading = false;
       },
     });
   }

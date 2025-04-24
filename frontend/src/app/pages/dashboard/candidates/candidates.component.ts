@@ -5,6 +5,7 @@ import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { JobService } from '../../../shared/services/job.service';
 import { JobApplication } from '../../../shared/interfaces/dashboard.interface';
 import { RouterLink } from '@angular/router';
+import { LoaderComponent } from '../../../shared/ui/loader/loader.component';
 
 @Component({
   selector: 'app-candidates',
@@ -14,6 +15,7 @@ import { RouterLink } from '@angular/router';
     DashboardLayoutComponent,
     ButtonComponent,
     RouterLink,
+    LoaderComponent,
   ],
   template: `
     <app-dashboard-layout>
@@ -23,87 +25,99 @@ import { RouterLink } from '@angular/router';
         </div>
 
         <!-- Candidate List -->
-        <div class="md:px-12 flex flex-col gap-6">
-          @for (application of applications; track application.id) {
-          <div
-            class="p-6 rounded-xl bg-background-light/30 border border-foreground-light/20 hover:border-[var(--color-accent)] transition-colors"
-          >
-            <div class="flex items-start justify-between mb-4">
-              <div class="flex gap-4">
-                <img
-                  [src]="'/images/profile-placeholder.jpeg'"
-                  alt="Profile"
-                  class="w-12 h-12 rounded-full object-cover"
-                />
-                <div>
-                  <h3 class="font-medium">
-                    {{ application.applicant.profile.firstName }}
-                    {{ application.applicant.profile.lastName }}
-                  </h3>
-                  <p class="text-sm text-foreground-light">
-                    {{ application.applicant.email }}
-                  </p>
-                  <p class="text-sm text-foreground-light">
-                    {{ application.applicant.profile.experienceLevel }}
-                  </p>
+        <div class="md:px-12">
+          @if (isLoading) {
+          <app-loader label="Loading candidates..." class="py-12" />
+          } @else if (applications.length === 0) {
+          <div class="flex flex-col items-center justify-center py-12">
+            <p class="text-foreground-light">No candidates have applied yet.</p>
+          </div>
+          } @else {
+          <div class="flex flex-col gap-6">
+            @for (application of applications; track application.id) {
+            <div
+              class="p-6 rounded-xl bg-background-light/30 border border-foreground-light/20 hover:border-[var(--color-accent)] transition-colors"
+            >
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex gap-4">
+                  <img
+                    [src]="'/images/profile-placeholder.jpeg'"
+                    alt="Profile"
+                    class="w-12 h-12 rounded-full object-cover"
+                  />
+                  <div>
+                    <h3 class="font-medium">
+                      {{ application.applicant.profile.firstName }}
+                      {{ application.applicant.profile.lastName }}
+                    </h3>
+                    <p class="text-sm text-foreground-light">
+                      {{ application.applicant.email }}
+                    </p>
+                    <p class="text-sm text-foreground-light">
+                      {{ application.applicant.profile.experienceLevel }}
+                    </p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-4">
+                  <span
+                    class="px-2 py-1 rounded-full"
+                    [class]="getStatusClasses(application.status)"
+                  >
+                    {{ application.status }}
+                  </span>
+                  <span
+                    class="px-2 py-1 rounded bg-[var(--color-accent)]/20 text-[var(--color-accent)]"
+                  >
+                    {{ application.matchPercentage }}% Match
+                  </span>
                 </div>
               </div>
-              <div class="flex items-center gap-4">
-                <span
-                  class="px-2 py-1 rounded-full"
-                  [class]="getStatusClasses(application.status)"
-                >
-                  {{ application.status }}
-                </span>
-                <span
-                  class="px-2 py-1 rounded bg-[var(--color-accent)]/20 text-[var(--color-accent)]"
-                >
-                  {{ application.matchPercentage }}% Match
-                </span>
-              </div>
-            </div>
 
-            <div class="flex flex-wrap gap-2 mb-4">
-              @for (skill of application.applicant.profile.skills; track skill)
-              {
-              <span class="px-2 py-1 rounded-full bg-background-light text-xs">
-                {{ skill }}
-              </span>
-              }
-            </div>
-
-            <div
-              class="flex items-center justify-between pt-4 border-t border-foreground-light/20"
-            >
-              <span class="text-sm text-foreground-light">
-                Applied {{ formatDate(application.appliedAt) }}
-              </span>
-              <div class="flex gap-2">
-                @if (application.status === 'Pending') {
-                <app-button
-                  size="sm"
-                  variant="primary"
-                  (click)="updateStatus(application.id, 'Accepted')"
-                  >Accept</app-button
+              <div class="flex flex-wrap gap-2 mb-4">
+                @for (skill of application.applicant.profile.skills; track
+                skill) {
+                <span
+                  class="px-2 py-1 rounded-full bg-background-light text-xs"
                 >
-                <app-button
-                  size="sm"
-                  variant="secondary"
-                  (click)="updateStatus(application.id, 'Rejected')"
-                  >Reject</app-button
-                >
+                  {{ skill }}
+                </span>
                 }
-                <app-button
-                  size="sm"
-                  variant="secondary"
-                  [routerLink]="[
-                    '/dashboard/profile',
-                    application.applicant.id
-                  ]"
-                  >View Profile</app-button
-                >
+              </div>
+
+              <div
+                class="flex items-center justify-between pt-4 border-t border-foreground-light/20"
+              >
+                <span class="text-sm text-foreground-light">
+                  Applied {{ formatDate(application.appliedAt) }}
+                </span>
+                <div class="flex gap-2">
+                  @if (application.status === 'Pending') {
+                  <app-button
+                    size="sm"
+                    variant="primary"
+                    (click)="updateStatus(application.id, 'Accepted')"
+                    >Accept</app-button
+                  >
+                  <app-button
+                    size="sm"
+                    variant="secondary"
+                    (click)="updateStatus(application.id, 'Rejected')"
+                    >Reject</app-button
+                  >
+                  }
+                  <app-button
+                    size="sm"
+                    variant="secondary"
+                    [routerLink]="[
+                      '/dashboard/profile',
+                      application.applicant.id
+                    ]"
+                    >View Profile</app-button
+                  >
+                </div>
               </div>
             </div>
+            }
           </div>
           }
         </div>
@@ -113,6 +127,7 @@ import { RouterLink } from '@angular/router';
 })
 export class CandidatesComponent implements OnInit {
   applications: JobApplication[] = [];
+  isLoading = false;
 
   constructor(private jobService: JobService) {}
 
@@ -122,6 +137,7 @@ export class CandidatesComponent implements OnInit {
 
   private async loadAllApplications() {
     try {
+      this.isLoading = true;
       const jobs = await this.jobService.getRecruiterJobs().toPromise();
       if (!jobs) return;
 
@@ -138,6 +154,8 @@ export class CandidatesComponent implements OnInit {
       this.applications.sort((a, b) => b.matchPercentage - a.matchPercentage);
     } catch (error) {
       console.error('Error loading applications:', error);
+    } finally {
+      this.isLoading = false;
     }
   }
 

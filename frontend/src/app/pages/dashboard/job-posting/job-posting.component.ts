@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import {
   FormBuilder,
   FormControl,
@@ -12,6 +12,8 @@ import { DashboardLayoutComponent } from '../dashboard-layout/dashboard-layout.c
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { InputComponent } from '../../../shared/ui/input/input.component';
 import { JobService } from '../../../shared/services/job.service';
+import { LoaderComponent } from '../../../shared/ui/loader/loader.component';
+import { Job } from '../../../shared/interfaces/dashboard.interface';
 
 interface JobPostingStep {
   id: number;
@@ -28,6 +30,7 @@ interface JobPostingStep {
     DashboardLayoutComponent,
     ButtonComponent,
     InputComponent,
+    LoaderComponent,
   ],
   template: `
     <app-dashboard-layout>
@@ -294,6 +297,43 @@ interface JobPostingStep {
         </div>
       </div>
     </app-dashboard-layout>
+
+    @if (isLoading) {
+    <app-loader label="Loading job details..." class="py-12" />
+    } @else {
+    <form
+      [formGroup]="jobForm"
+      (ngSubmit)="onSubmit()"
+      class="max-w-3xl mx-auto space-y-6"
+    >
+      <!-- ...existing form content... -->
+
+      <div class="flex justify-end gap-4">
+        <app-button
+          type="button"
+          variant="secondary"
+          (click)="cancel()"
+          [disabled]="isSaving"
+        >
+          Cancel
+        </app-button>
+        <app-button
+          type="submit"
+          variant="primary"
+          [loading]="isSaving"
+          [disabled]="!jobForm.valid || isSaving"
+        >
+          {{ editMode ? 'Update Job' : 'Post Job' }}
+        </app-button>
+      </div>
+    </form>
+    } @if (isSaving) {
+    <div
+      class="fixed inset-0 bg-background/50 flex items-center justify-center z-50"
+    >
+      <app-loader label="Saving job posting..." />
+    </div>
+    }
   `,
 })
 export class JobPostingComponent {
@@ -303,6 +343,13 @@ export class JobPostingComponent {
   skillInput = new FormControl('');
   skills: string[] = [];
   jobForm!: FormGroup;
+
+  // Add loading states
+  isLoading = false;
+  isSaving = false;
+
+  editMode = false;
+  jobId?: string;
 
   steps: JobPostingStep[] = [
     {
@@ -330,9 +377,20 @@ export class JobPostingComponent {
   constructor(
     private fb: FormBuilder,
     private jobService: JobService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {
     this.initForm();
+    this.route.params.subscribe((params) => {
+      if (params['id']) {
+        this.jobId = params['id'];
+        this.editMode = true;
+        // Add null check for jobId
+        if (this.jobId) {
+          this.loadJobData(this.jobId);
+        }
+      }
+    });
   }
 
   private initForm() {
@@ -423,9 +481,14 @@ export class JobPostingComponent {
     try {
       const jobData = {
         ...this.jobForm.value,
+        experienceLevel: this.jobForm.value.experience,
+        educationRequirements: this.jobForm.value.education,
         requiredSkills: this.skills,
         status: 'draft',
       };
+      // Remove the old property names
+      delete jobData.experience;
+      delete jobData.education;
 
       await this.jobService.createJob(jobData).toPromise();
       alert('Job posted successfully!');
@@ -453,6 +516,58 @@ export class JobPostingComponent {
         return [];
       default:
         return [];
+    }
+  }
+
+  private loadJobData(jobId: string) {
+    this.isLoading = true;
+    // Change getJob to getJobDetails to match the service method
+    this.jobService.getJobDetails(jobId).subscribe({
+      next: (job: Job) => {
+        this.jobForm.patchValue({
+          title: job.title,
+          description: job.description,
+          department: job.department,
+          location: job.location,
+          experience: job.experienceLevel,
+          education: job.educationRequirements,
+          employmentType: job.employmentType,
+          salaryRange: job.salaryRange,
+          benefits: job.benefits,
+          workingHours: job.workingHours,
+        });
+        this.skills = job.requiredSkills;
+        this.isLoading = false;
+      },
+      error: (error: Error) => {
+        console.error('Error loading job:', error);
+        this.isLoading = false;
+      },
+    });
+  }
+
+  cancel() {
+    this.router.navigate(['/dashboard/employer/jobs']);
+  }
+
+  async onSubmit() {
+    if (this.jobForm.valid) {
+      this.isSaving = true;
+      try {
+        if (this.editMode) {
+          await this.jobService
+            .updateJob(this.jobId!, this.jobForm.value)
+            .toPromise();
+        } else {
+          await this.jobService.createJob(this.jobForm.value).toPromise();
+        }
+        this.router.navigate(['/dashboard/employer/jobs']);
+      } catch (error) {
+        console.error('Error saving job:', error);
+        alert('Failed to save job posting. Please try again.');
+      } finally {
+        this.isSaving = false;
+      }
     }
   }
 }

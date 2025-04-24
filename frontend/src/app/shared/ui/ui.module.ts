@@ -9,3 +9,4 @@ export * from './input/input.component';
 export * from './logo/logo.component';
 export * from './header/header.component';
 export * from './footer/footer.component';
+export * from './loader/loader.component';

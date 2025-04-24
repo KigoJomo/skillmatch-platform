@@ -15,6 +15,7 @@ import { InputComponent } from '../../../shared/ui/input/input.component';
 import { LogoComponent } from '../../../shared/ui/logo/logo.component';
 import { AuthService } from '../../../shared/services/auth.service';
 import { UserRole } from '../../../shared/interfaces/dashboard.interface';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-register',
@@ -36,6 +37,7 @@ export class RegisterComponent {
   registerForm: FormGroup;
   isLoading = false;
   error: string | null = null;
+  formSubmitted = false;
 
   constructor(
     private fb: FormBuilder,
@@ -45,7 +47,7 @@ export class RegisterComponent {
     this.registerForm = this.fb.nonNullable.group(
       {
         firstName: ['', [Validators.required]],
-        lastName: ['', [Validators.required]],
+        lastName: [' ', [Validators.required]],
         email: ['', [Validators.required, Validators.email]],
         password: ['', [Validators.required, Validators.minLength(8)]],
         confirmPassword: ['', [Validators.required]],
@@ -74,7 +76,10 @@ export class RegisterComponent {
 
   getErrorMessage(field: string): string | undefined {
     const control = this.registerForm.get(field);
-    if (!control) return undefined;
+    // Only show errors if the field has been touched or the form was submitted
+    if (!control || (!control.touched && !this.formSubmitted)) {
+      return undefined;
+    }
 
     if (control.hasError('required')) {
       return `${field.charAt(0).toUpperCase() + field.slice(1)} is required`;
@@ -95,6 +100,8 @@ export class RegisterComponent {
   }
 
   async onSubmit() {
+    this.formSubmitted = true;
+
     if (this.registerForm.invalid) {
       Object.keys(this.registerForm.controls).forEach((key) => {
         const control = this.registerForm.get(key);
@@ -125,11 +132,32 @@ export class RegisterComponent {
         await this.router.navigate([`/dashboard/${dashboardType}`]);
       }
     } catch (error: any) {
-      if (error?.status === 400) {
-        this.error = 'Email is already registered';
+      if (error instanceof HttpErrorResponse) {
+        switch (error.status) {
+          case 400:
+            this.error = error.error?.message || 'Email is already registered';
+            break;
+          case 422:
+            this.error =
+              'Invalid input. Please check your registration details.';
+            break;
+          case 429:
+            this.error =
+              'Too many registration attempts. Please try again later.';
+            break;
+          case 0:
+            this.error =
+              'Unable to connect to the server. Please check your internet connection.';
+            break;
+          default:
+            this.error =
+              error.error?.message || 'Registration failed. Please try again.';
+        }
       } else {
-        this.error = 'Registration failed. Please try again.';
+        this.error = error.message || 'Registration failed. Please try again.';
       }
+
+      console.error('Registration error:', error);
     } finally {
       this.isLoading = false;
     }
